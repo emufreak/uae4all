@@ -1,0 +1,40 @@
+#!/bin/sh
+
+START=0
+STOP=10000
+STEP=10
+
+if
+[ "$#" == "3" ]
+then
+	START=$1
+	STOP=$2
+	STEP=$3
+fi
+
+while
+[ "${START}" != "${STOP}" ]
+do
+	echo -n $START"."
+	NEXT=`expr ${START} + ${STEP}`
+	cd /opt/castaway/uae4all
+	debug/dbg ${START} ${NEXT} ${STEP}
+	echo -n "."
+#sleep 60
+	cd /opt/castaway/ln-uae4all
+	debug/dbg ${START} ${NEXT} ${STEP}
+	echo -n "."
+#sleep 60
+	cd /resto/tmp/uaetrazas
+	/opt/castaway/uae4all/debug/compara_uae ${START} ${NEXT} ${STEP}
+	RES=$?
+	if
+	[ "$RES" != "0" ]
+	then
+		exit 1
+	fi
+#sleep 100
+	START=${NEXT}
+done
+echo " "
+

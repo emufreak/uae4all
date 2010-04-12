@@ -1,0 +1,99 @@
+
+#KOS_CFLAGS+= -DDEBUG_FRAMERATE
+#KOS_CFLAGS+= -DAUTO_FRAMERATE=2000
+#KOS_CFLAGS+= -DMAX_AUTO_FRAMERATE=5000
+#KOS_CFLAGS+= -DAUTO_FRAMERATE_SOUND
+#KOS_CFLAGS+= -DAUTO_FRAMERATE_THROTTLE
+
+#KOS_CFLAGS+= -DPROFILER_UAE4ALL
+#KOS_CFLAGS+= -DAUTO_PROFILER=1600
+#KOS_CFLAGS+= -DMAX_AUTO_PROFILER=3000
+#KOS_CFLAGS+= -DAUTO_PROFILER_SOUND
+#KOS_CFLAGS+= -DAUTO_PROFILER_THROTTLE
+
+ifdef USE_DC_SQ
+KOS_CFLAGS+= -DDC_SQ -falign-functions=32 -falign-labels=32 -falign-loops=32 -falign-jumps=32 
+endif
+
+KOS_CPPFLAGS = $(KOS_CFLAGS)
+
+all: $(TARGET).elf
+
+include $(KOS_BASE)/Makefile.rules
+
+FAME_CORE=1
+
+OBJS =	\
+	src/main.o \
+	src/audio.o \
+	src/autoconf.o \
+	src/blitfunc.o \
+	src/blittable.o \
+	src/blitter.o \
+	src/cia.o \
+	src/compiler.o \
+	src/custom.o \
+	src/disk.o \
+	src/drawing.o \
+	src/ersatz.o \
+	src/gfxutil.o \
+	src/keybuf.o \
+	src/md-support.o \
+	src/memory.o \
+	src/missing.o \
+	src/gui.o \
+	src/od-joy.o \
+	src/sound.o \
+	src/sdlgfx.o \
+	src/writelog.o \
+	src/zfile.o \
+	src/menu/fade.o \
+	src/menu/menu.o \
+	src/menu/menu_load.o \
+	src/menu/menu_main.o \
+	src/vkbd/vkbd.o \
+	romdisk.o
+
+ifdef FAME_CORE
+KOS_CFLAGS+=-DUSE_FAME_CORE
+OBJS += \
+	src/m68k/fame/fame.o \
+	src/m68k/fame/m68k_intrf.o
+else
+OBJS += \
+	src/m68k/uae/newcpu.o \
+	src/m68k/uae/readcpu.o \
+	src/m68k/uae/cpudefs.o \
+	src/m68k/uae/fpp.o \
+	src/m68k/uae/cpustbl.o \
+	src/m68k/uae/cpuemu.o
+
+endif
+
+
+clean:
+	rm -f $(OBJS) $(TARGET).elf $(TARGET).bin  romdisk.o romdisk.img example.iso
+
+$(TARGET).elf: $(OBJS)
+	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $(TARGET).elf $(KOS_START) \
+	$(OBJS) $(OBJEXTRA) -lSDL_mixer -lSDL_dma_127 -lz_121 -lm $(KOS_LIBS)
+
+$(TARGET).bin: $(TARGET).elf
+	$(KOS_OBJCOPY) -R .stack -O binary $(TARGET).elf $(TARGET).bin
+
+romdisk.o: romdisk.img
+#	$(KOS_BASE)/utils/bin2o/bin2o romdisk.img romdisk romdisk.o
+	bin2odc romdisk.img romdisk.o
+
+romdisk.img:
+	$(KOS_GENROMFS) -f romdisk.img -d data -v
+
+example.iso: example
+	mkisofs -joliet-long -l -o example.iso -graft-points /=example/
+
+
+run: $(TARGET).elf example.iso
+	$(KOS_LOADER) $(TARGET).elf -i example.iso
+#	$(KOS_LOADER) $(TARGET).elf
+
+

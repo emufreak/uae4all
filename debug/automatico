@@ -1,0 +1,40 @@
+#!/bin/sh
+
+START=3
+END=60
+STEP=1
+
+if
+[ "$#" == "3" ]
+then
+	START=$1
+	END=$2
+	STEP=$3
+fi
+
+
+DIR=/resto/tmp/uaetrazas/
+PREFIX=fame_crazy
+DIFF=diferencia
+FICHERO_TMP_DIFF=/tmp/diff_fames
+
+while
+[ "${START}" != "${END}" ]
+do
+	FICHERO_SH4=${DIR}sh4_${PREFIX}_${START}
+	FICHERO_X86=${DIR}${PREFIX}_${START}
+	FICHERO_DIFF=${DIR}${DIFF}
+	grep -v transferred ${FICHERO_SH4} | grep -v maple | grep -v "arch: shutting down kernel" | grep -v "bba_rx_thread exiting" | grep -v "vid_set_mode" | grep -v "fs_romdisk" |  diff - ${FICHERO_X86} > ${FICHERO_TMP_DIFF}
+	diff ${FICHERO_TMP_DIFF} ${FICHERO_DIFF} >/dev/null
+	RES=$?
+	if
+	[ "${RES}" = "0" ]
+	then
+		echo ${START} " Ok."
+	else
+		echo " "
+		echo DIFERENCIAS EN ${START}
+		exit 1
+	fi
+	START=`expr ${START} + ${STEP}`
+done

@@ -1,0 +1,32 @@
+#!/bin/sh
+
+START=40
+END=150
+STEP=10
+
+if
+[ "$#" == "3" ]
+then
+	START=$1
+	END=$2
+	STEP=$3
+fi
+
+PREFIX=/resto/tmp/uaetrazas/alien_fame-sh4
+FICH=debug/dc_fame
+FICHERO=/tmp/uae4all_makefile
+
+while
+[ "${START}" != "${END}" ]
+do
+	NEXT=`expr ${START} + ${STEP}`
+	cat ${FICH}.1 > ${FICHERO}
+	echo "KOS_CFLAGS+= -DSTART_DEBUG="${START} >> ${FICHERO}
+	echo "KOS_CFLAGS+= -DMAX_AUTOEVENTS="${NEXT} >> ${FICHERO}
+	cat ${FICH}.2 >> ${FICHERO}
+	touch src/sdlgfx.cpp
+	make -f ${FICHERO} >/dev/null 2>/dev/null
+	make -f ${FICHERO} run > ${PREFIX}_${START}
+	sleep 5
+	START=${NEXT}
+done

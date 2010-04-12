@@ -1,0 +1,17 @@
+--------------------------------------------
+M68K: 18.88% -> Ticks=7977 -> 433K veces
+EVENTS: 81.12% -> Ticks=34279 -> 433K veces
+HSync: 70.17% -> Ticks=29651 -> 427K veces
+Copper: 3.61% -> Ticks=1523 -> 91K veces
+Audio: 0.00% -> Ticks=0 -> 0K veces
+CIA: 0.00% -> Ticks=0 -> 434K veces
+Blitter: 8.51% -> Ticks=3598 -> 110K veces
+Vsync: 27.25% -> Ticks=11514 -> 1K veces
+update_fetch: 24.10% -> Ticks=10184 -> 345K veces
+linetoscr: 9.86% -> Ticks=4167 -> 311K veces
+do_long_fetch: 9.96% -> Ticks=4210 -> 314K veces
+pfield_doline: 9.27% -> Ticks=3915 -> 311K veces
+draw_sprites_ecs: 0.00% -> Ticks=0 -> 0K veces
+flush_block: 3.46% -> Ticks=1464 -> 1K veces
+SET_INTERRUPT: 0.33% -> Ticks=140 -> 62K veces
+--------------------------------------------

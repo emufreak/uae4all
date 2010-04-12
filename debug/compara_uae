@@ -1,0 +1,39 @@
+#!/bin/sh
+
+START=500
+END=600
+STEP=10
+
+if
+[ "$#" == "3" ]
+then
+	START=$1
+	END=$2
+	STEP=$3
+fi
+
+
+PREFIX=/resto/tmp/uaetrazas/spy
+UAE=uae
+FAME=fame
+DIFF=diff
+
+while
+[ "${START}" != "${END}" ]
+do
+	FICHERO_FAME=${PREFIX}_${FAME}_${START}
+	FICHERO_UAE=${PREFIX}_${UAE}_${START}
+	FICHERO_DIFF=${PREFIX}_${DIFF}_${START}
+	diff ${FICHERO_FAME} ${FICHERO_UAE} > ${FICHERO_DIFF}
+	RES=$?
+	if
+	[ "${RES}" = "0" ]
+	then
+		rm -f ${FICHERO_FAME} ${FICHERO_UAE} ${FICHERO_DIFF}
+	else
+		echo " "
+		echo DIFERENCIAS EN ${START}
+		exit 1
+	fi
+	START=`expr ${START} + ${STEP}`
+done

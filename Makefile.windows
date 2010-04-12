@@ -1,0 +1,109 @@
+NAME   = uae4all
+O      = o
+RM     = rm -f
+CC     = gcc
+CXX    = g++
+STRIP  = strip
+
+PROG   = $(NAME).exe
+
+all: $(PROG)
+
+FAME_CORE=1
+
+DEFAULT_CFLAGS = `sdl-config --cflags`
+LDFLAGS        = `sdl-config --libs` -lmingw32 -lmingwex -mwindows
+
+MORE_CFLAGS = -O3  -Isrc/ -Isrc/include/ -Isrc/menu -Isrc/vkbd -fomit-frame-pointer  -Wno-unused -Wno-format -DUSE_SDL -DGCCCONSTFUNC="__attribute__((const))" -DUSE_UNDERSCORE -fno-exceptions -DUNALIGNED_PROFITABLE -DREGPARAM="__attribute__((regparm(3)))" -DOPTIMIZED_FLAGS -D__inline__=__inline__ -DSHM_SUPPORT_LINKS=0 -DOS_WITHOUT_MEMORY_MANAGEMENT -DVKBD_ALWAYS -DMENU_MUSIC -DDOUBLEBUFFER 
+
+MORE_CFLAGS+= -DWIN32 -DUSE_ZFILE
+
+MORE_CFLAGS+= -DROM_PATH_PREFIX=\"./\" -DDATA_PREFIX=\"./data/\" -DSAVE_PREFIX=\"./\"
+
+#MORE_CFLAGS+= -DNO_SOUND
+MORE_CFLAGS+= -DFAME_INTERRUPTS_PATCH
+
+#MORE_CFLAGS+= -DDEBUG_UAE4ALL
+#MORE_CFLAGS+= -DDEBUG_UAE4ALL_FFLUSH
+#MORE_CFLAGS+= -DDEBUG_M68K
+MORE_CFLAGS+= -DDEBUG_INTERRUPTS
+#MORE_CFLAGS+= -DDEBUG_CIA
+#MORE_CFLAGS+= -DDEBUG_SOUND
+#MORE_CFLAGS+= -DDEBUG_MEMORY
+#MORE_CFLAGS+= -DDEBUG_DISK
+#MORE_CFLAGS+= -DDEBUG_CUSTOM
+#MORE_CFLAGS+= -DDEBUG_GFX -DDEBUG_BLITTER
+#MORE_CFLAGS+= -DDEBUG_FRAMERATE
+
+
+CFLAGS  = -I/usr/local/include $(DEFAULT_CFLAGS) $(MORE_CFLAGS)
+
+OBJS =	\
+	src/audio.o \
+	src/autoconf.o \
+	src/blitfunc.o \
+	src/blittable.o \
+	src/blitter.o \
+	src/cia.o \
+	src/savedisk.o \
+	src/compiler.o \
+	src/custom.o \
+	src/disk.o \
+	src/drawing.o \
+	src/ersatz.o \
+	src/gfxutil.o \
+	src/keybuf.o \
+	src/main.o \
+	src/md-support.o \
+	src/memory.o \
+	src/missing.o \
+	src/gui.o \
+	src/od-joy.o \
+	src/sound.o \
+	src/sdlgfx.o \
+	src/writelog.o \
+	src/zfile.o \
+	src/menu/fade.o \
+	src/menu/menu.o \
+	src/menu/menu_load.o \
+	src/menu/menu_main.o \
+	src/vkbd/vkbd.o \
+
+ifdef FAME_CORE
+CFLAGS+=-DUSE_FAME_CORE
+src/m68k/fame/fame_win.o: src/m68k/fame/fame_win.asm
+	nasm -f gnuwin32 src/m68k/fame/fame_win.asm
+OBJS += \
+	src/m68k/fame/fame_win.o \
+	src/m68k/fame/m68k_intrf.o
+else
+OBJS += \
+	src/m68k/uae/newcpu.o \
+	src/m68k/uae/readcpu.o \
+	src/m68k/uae/cpudefs.o \
+	src/m68k/uae/cpuemu.o \
+	src/m68k/uae/cpustbl.o \
+	src/m68k/uae/fpp.o
+endif
+
+CPPFLAGS  = $(CFLAGS) -fno-exceptions -I./src
+
+$(PROG): $(OBJS) 
+	$(CC) -L/usr/local/lib -L. -o $(PROG) -lmingw32 $(OBJS) -lSDL_static_129 -lstdc++ -lpthread -mwindows -mno-cygwin -luser32 -lgdi32 -lwinmm -ldxguid
+	strip $(PROG)
+
+#	$(CC) $(CFLAGS) -o $(PROG) $(OBJS) $(LDFLAGS)
+
+src/$(NAME)_res.o: src/$(NAME).rc
+	windres -i src/$(NAME).rc -o src/$(NAME)_res.o
+
+
+
+
+run: $(PROG)
+	./$(PROG)
+
+clean:
+	$(RM) $(PROG) $(OBJS) std*.txt
+
+
