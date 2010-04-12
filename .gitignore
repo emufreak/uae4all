@@ -1,0 +1,6 @@
+*.o
+debian/files
+debian/uae4all.substvars
+debian/uae4all/
+/build-stamp
+/uae4all
