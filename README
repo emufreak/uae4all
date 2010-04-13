@@ -1,0 +1,36 @@
+                     __  __ ___    _____  ____  ___    __    __ 
+                    /#/ /#// _ |  /####/ / / / / _ |  / /   / / 
+                   /#/ /#// __ | /##/   /_  _// __ | / /__ / /__
+                  /#####//_/ |_|/####/   /_/ /_/ |_|/____//____/
+                                       M a e m o  E d i t i o n
+
+
+This is UAE4ALL GP2X Wiz port for Maemo 5 Platform (ie. Nokia N900).
+This released is based on the source code from Chui's Dreamcast UAE4ALL and notaz's UAE4ALL GP2x v0.8.0.
+
+Homepage of UAE4All 0.8.0 Maemo Edition:
+- http://github.com/smokku/uae4all
+
+
+Chui's Dreamcast UAE4ALL:
+- http://chui.dcemu.co.uk/uae4all.html
+
+notaz's UAE4ALL GP2x:
+- http://notaz.gp2x.de/other.php#GP2X
+
+
+---------------------------------------------------------------------------
+UAE4ALL RC 1 (11/03/2006)                                Chui & Fox68k 2006
+
+UAE4ALL is an Amiga 500 emulator for the Dreamcast videogame system.
+
+This is a branch emulation development from Experimental UAE 0.8.22.
+E-UAE is open-source software and is made available under the terms of the
+GNU GPL. E-UAE is based on the work of dozens of contributors including
+Bernd Schmidt (the original author and maintainer of UAE), Bernie Meyer 
+(the author of the x86 JIT compiler), Toni Wilen (the current maintainer of 
+WinUAE), and many more.
+---------------------------------------------------------------------------
+
+
+This is GPL'ed software... respect the license.

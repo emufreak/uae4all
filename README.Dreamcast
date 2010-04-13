@@ -1,0 +1,122 @@
+                     __  __ ___    _____  ____  ___    __    __ 
+                    /#/ /#// _ |  /####/ / / / / _ |  / /   / / 
+                   /#/ /#// __ | /##/   /_  _// __ | / /__ / /__
+                  /#####//_/ |_|/####/   /_/ /_/ |_|/____//____/
+                                                             
+              Official site: http://chui.dcemu.co.uk/uae4all.html
+
+
+---------------------------------------------------------------------------
+UAE4ALL RC 1 (11/03/2006)                                Chui & Fox68k 2006
+---------------------------------------------------------------------------
+
+UAE4ALL is an Amiga 500 emulator for the Dreamcast videogame system.
+
+This is a branch emulation development from Experimental UAE 0.8.22.
+E-UAE is open-source software and is made available under the terms of the
+GNU GPL. E-UAE is based on the work of dozens of contributors including
+Bernd Schmidt (the original author and maintainer of UAE), Bernie Meyer 
+(the author of the x86 JIT compiler), Toni Wilen (the current maintainer of 
+WinUAE), and many more.
+
+
+History
+-------
+
+- RC 2 (11/03/2006)
+
+   * Save disks changes to VMU.
+   * Superthrottle mode for speed up intros and loading time.
+   * SH4 exceptions catched for stability.
+   * ADZ support (ADF floppy image gzip compressed)
+   * Lastest FAME a new interrupt controller emulation, better game compatibility.
+
+
+- Beta 2 (11/10/2005)
+
+    * Better game compatibility. New games supported: Shadow of the Best,
+      Dune 2, Alien Breed and Speed Ball 2 among others.
+
+
+- Beta 1 (09/04/2005)
+
+    * UAE 68000 core replaced with FAME emulation library.
+    * Internal emulator structure reworked.
+    * Many speed ups and improvements.
+
+
+- Alpha 1 (09/24/2004)
+
+    * First public release.
+
+
+Features
+--------
+
+* Main CPU Motorola 68000:
+      - FAME emulation library
+        by Fox68k (http://www.m68k.com/fame/).
+
+* UAE sound core:
+      - Fast sound with 8 buffers synchronized.
+
+* Filemanager with subdirectories access.
+
+* Dreamcast Mouse & Keyboard supported.
+
+* IO Ports (controller 1 & 2).
+
+* PAL dreamcast users can select between 50-60Hz.
+
+
+Main menu
+---------
+
+- Select Image Disk: Allows you to load an ADF (Amiga Disk File).
+
+- SuperThrottle : Hold right trigger first and left trigger second for automatic sound off and frameskip to 10 for speed up. This try to avoid large time for intros and loading time. 
+
+- ADZ support : You can compress your ADF floppy images with GZIP compression utility in order to save CD space. GZIP is free and multiplatform: Windows, GNU/Linux, MacOS ... 
+
+- Save disks changes to VMU : UAE4ALL can save to VMU disk sectors changed using ZIP compression. For games as Dune2, now you can save your campaigns and continue at future. A new menu option called "Save Disks" has added for enable or disable this feature. 
+
+- 2 floppy drives emulted : You can choose on filemanager a new disk for DF0 with A button and a new disk for DF1 with Y button. Also, you can eject DF1 with 'Eject DF1' menu option. 
+
+- Throttle:  Amiga is a hard machine to emulate. So, a lot of games support drawing shortcuts and cpu timeslice ampler. These methods speed up emulation and improve playbility under Dreamcast. 
+
+- Frameskip: You can adjust frame skipping with this option. Unfortunately, UAE4ALL needs frameskipping for real time emulation. Select auto-frameskip menu option for real speed. If you want good sound output, make sure you select this option.
+
+- Reset: Hardware Amiga 500 reset.
+
+- Run: Runs the Amiga 500 game.
+
+- Exit: Exits the emulator and resets Dreamcast.
+
+
+Controllers
+-----------
+
+- Virtual Keyboard with triggers L-R.
+- Joystick is emulated with digital pad + A,X buttons.
+- Mouse is emulated with analog pad + Y,B buttons.
+
+
+Burning instructions
+--------------------
+
+You will find instructions on how to use Selfboot inducer to make a bootable 
+disk for the Dreamcast at http://dcevolution.net/DCHelp/index.php?id=sbindv4.
+
+
+Credits
+-------
+
+* UAE development team.
+
+
+---------------------------------------------------------------------------
+
+That is all for now folks, have fun!
+
+Chui & Fox68k
+ÿ
