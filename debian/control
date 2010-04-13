@@ -1,0 +1,69 @@
+Source: uae4all
+Section: user/games
+Priority: extra
+Maintainer: Tomasz Sterna <tomek@xiaoka.com>
+Build-Depends: debhelper (>= 5), zlib1g-dev, libsdl1.2-dev, libsdl-gfx1.2-dev, libsdl-image1.2-dev, libsdl-ttf2.0-dev, libpng12-dev
+Standards-Version: 3.7.3
+Vcs-Git: git://github.com/smokku/uae4all.git
+
+Package: uae4all
+Architecture: armel
+Depends: ${shlibs:Depends}
+Description: UAE4ALL is an Amiga 500 emulator.
+ This is a branch emulation development from Experimental UAE 0.8.22.
+ E-UAE is open-source software and is made available under the terms of the
+ GNU GPL. E-UAE is based on the work of dozens of contributors including
+ Bernd Schmidt (the original author and maintainer of UAE), Bernie Meyer
+ (the author of the x86 JIT compiler), Toni Wilen (the current maintainer of
+ WinUAE), and many more.
+XSBC-Bugtracker: http://github.com/smokku/uae4all/issues
+XB-Maemo-Display-Name: UAE4All Maemo Edition
+XB-Maemo-Icon-26:
+ iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAIAAADYYG7QAAAAAXNSR0IArs4c
+ 6QAAB/xJREFUWMPtWW1MU1kaPud+ci8MKRnKBAUtlQLFMai7Ag7ZUQMGE41o
+ FocQYCTix6iESrPByYaocY2ZRY0/MBrRjLqgdn6ARIbZovuD6grGyKcSTd0O
+ Qb6dAG1ptZzee8/+uENTsUBBmNkf+/66Pad973Pez+c9hVarFUwjGGOaph88
+ eNDW1kHT7JRNQUAsy4DpBULoeZYkCSFEURwAGAAQFMRlZv6ZYXz8nAIzCsuy
+ dXV3a2tbk5KyBQF51hF6295+/euvMzmOn+63Vqv1l1+GMZZYlqNp+ocf6tLS
+ SgXBBSEcHe0YGhrU64sxfg/37IAAAAxDf/aZSqP5wu12eRZdrvG+vn+uWbM2
+ MDBwikZZSJKsra1taRmIjFxlsfwrL29XSEhoTMwXCL0FAERF/eHHHy+tXWtK
+ S0tzu93eGgjgh+BfRQIAA/Drw6yCkLB0aXJy8jeSRAuCMKlJAgATBJmS8s3B
+ g6VdXc8p6j2j+AVo3oKxKIpuOW6mnJCimG3b/nbgQMmrV+Y5W+gjhICQ8Bnv
+ kiQGB4d98klcU9O/vQFRC2EG7BsLAa3Wn7u7HwEgfAgLQogxJghSkqS5BfW0
+ ZycInud4np9u98sv/xQZ+R8A+hMS8oODg/1UO39AAwM93377F5KkZqhDEEIA
+ MADw7VuHzeYGAC4KIAghywbl5PxjirVntShCTp81YgEsBCGkKMafE78fbdJi
+ AfK8Yq7HmN2Q4H9M/g/oY7JMztsPU0kQEMYYQkgQFEEQvxEgjDHLsk+fPm1p
+ aSFJFQAAQsLpHJ2YcEH4iqbFjo52nl8SHb1ZECbmWtkZhuV5BUFQ/gLCGPM8
+ f/r0aZqmtdr4lhYHAICmAxoaTvA8Lis7lZi4rrW1zW4f/+67v2u1WjiX9Kco
+ 2mh8mJpa+umnKr8AyUSxubl5ZGSkvLz8yJEijMcnPSisW7dGrVZzHB8YGNjT
+ 06NShV+/fnlO5mFZ9vPP14qi4G9QQwgJgrh48eLRo0dFUfQqtZTVajUYbjc1
+ NQUEBJAkKb+AIAjSb8EYS5I02Y+hvy7r6uqKi4sLDQ31dHKSpHt7WxFynDhx
+ 0u12R0VFuVyuiooKSZJIkoR++8z7hH4FNcaYJEmz2ZyZmYkQkukcxriv79lP
+ P/31yJGDJSUlCKFDhw7J69euXVvELMMYMwzT2dnZ29sbERFht9tTUlIkCTsc
+ ls7OC+Xl5776KsvhcAAA3G63y+WqrKzcvXs3hHBRCqNsG4vFcvv27b179yYk
+ JNTX12dmZn7//bUNG1bX1NzeunWb0+n0WL6qqmrDhg3p6emzemGegCCEoige
+ O3asrKxM9lRBQQFJkjdv3rx69apSqfRukM3NzUqlMjY2dhErNYTw7t27BQUF
+ breb47j79++bTKaTJ09GRkba7fZJtgUghJWVlRRF5ebmCoLg8Zdcu70fpgSD
+ n54lvGY/ZLFY4uPjRVGsq6vr7OzU6XTh4eEIIY8uCOGdO3eioqKys7MxxgqF
+ guM4Of/l70iSb8YjM+gZCPi0QU0QxPj4uNls3rdvH03TU14AIRwbG4uLi4MQ
+ Dg8Pp6am7ty5882bN0qlsrq6OiUlJScnp6ioaPPmzQ0NDYmJiStWrDCbzS9f
+ vgQAFBUV3bhx48yZMxqNZm7dPigoqKioiKZpn3b2nFWlUqnV6t7e3vz8fIqi
+ zp07Nzg46HQ61Wr14cOHlUqlRqMxGo1hYWEGgyE6OvrevXsVFRVLliyZ2Ui+
+ e7UgCNN53VMJJUliGCY7O3vVqlUul8toNCYkJFRVVfX19RmNxqamppiYmJ6e
+ nk2bNlEUFRoaqtPpeJ6XJGmSIMhBCf3t9j7RYIxjYmIaGxudTifGuLCw8N27
+ d42Njenp6SRJIoS2bNkCIUQImUwmm81mMBgcDsezZ88yMjKGh4eHhoYAADzP
+ u1zvRkZ+xtjtcLyBMHb+nBpjvH79+lOnTj1+/FihUKjValEUWZa9cuVKd3d3
+ SUmJQqG4fPlyfn7+zEoOHNgjSW6MBxMS/piUtN7biXMm+QzDiKI4MDDw+vVr
+ nU4nB0pfX5/BYNi6dSvP8yaTSa/X+69QkiTv1Jkz30MIJScnFxYWNjc3X7hw
+ 4fnz58XFxcePH8/IyBBFsa2tbfny5TRNi37LlGCdDwEVBGF0dLSjo0OpVCYm
+ JqpUqpUrVw4NDXEcd/bsWb1ejxCatd74lWUEQcw+yFGUxWIJCwuTEyowMHDj
+ xo2rV69ub29/8uRJZGRkRETEdOVxbq2DoiiHw9Hf3x8SEjLD+eQenJWVtX37
+ do7jKIqCEFIURRCEwWDYv38/QmhhmitJksuWLZP7wAxCkqTs+4mJCZvNVlpa
+ 2trampeXZzKZYmNjw8PD5+0sHy7zIpfgw5bCsizHcQ8fPty1a5fL5ZLXQ0JC
+ zp8/r9VqtVptVlaWbLDFmsu8Y+vRo0f19fWSJCkUiuLiYu+bSoZhRkdH9+zZ
+ Y7Va/e/qHwUIQvjixYukpKTo6OiIiAiapr1JRXV1tU6ns9lsC0Id/S2MBEFo
+ NJr4+HiPWyGENE339/ePjIyo1erfYbaXL3s9bW5sbKympkav1+/YsYNl2d9i
+ tp95mrl06dLSpUtv3bpFkuSUy+/f4fZDHkAzMjIwxguIxoeFfBZrmVB7b8kf
+ ZScu7BhETalDHR0ddrt9SjUiCMJsNgcEBHi2BEEYGBhYjPsh6Pl7CkLY3t5u
+ Mpl8pj1CiCRJ79sgnudzc3NZll1YC/0XJHUf9AHhbosAAAAASUVORK5CYII=
+ ====

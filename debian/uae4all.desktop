@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Type=Application
+Name=UAE4All
+GenericName=Commodore Amiga 500 Emulator
+Comment=Lite Amiga Emulator
+Exec=/usr/games/uae4all
+Icon=uae4all
+Categories=Game;
+X-Osso-Type=application/x-executable

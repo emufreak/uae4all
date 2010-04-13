@@ -1,0 +1,17 @@
+This package was debianized by Tomasz Sterna <tomek@xiaoka.com> on
+Sun, 11 Apr 2010 18:46:12 +0200.
+
+It was downloaded from http://chui.dcemu.co.uk/uae4all.html
+
+UAE4ALL is an Amiga 500 emulator.
+This is a branch emulation development from Experimental UAE 0.8.22.
+E-UAE is open-source software and is made available under the terms of the
+GNU GPL. E-UAE is based on the work of dozens of contributors including
+Bernd Schmidt (the original author and maintainer of UAE), Bernie Meyer
+(the author of the x86 JIT compiler), Toni Wilen (the current maintainer of
+WinUAE), and many more.
+
+License: GPL, see `/usr/share/common-licenses/GPL'
+
+The Debian packaging is (C) 2010, Tomasz Sterna <tomek@xiaoka.com> and
+is licensed under the GPL, see `/usr/share/common-licenses/GPL'.

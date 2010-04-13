@@ -1,0 +1,4 @@
+uae4all usr/games/
+data usr/share/uae4all/
+debian/uae4all.desktop usr/share/applications/hildon/
+debian/uae4all.png usr/share/pixmaps/
