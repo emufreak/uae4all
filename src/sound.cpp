@@ -20,7 +20,6 @@
 #include "sound.h"
 #include "audio.h"
 
-#include "custom.h"
 #include "xwin.h"
 #include "drawing.h"
 
@@ -179,7 +178,11 @@ void sound_default_evtime(void)
 double media_ratio=0;
 static __inline__ void calcule_audio_ratio(void)
 {
+#ifndef DREAMCAST
+	unsigned long long ahora=SDL_GetTicks();
+#else
 	unsigned long long ahora=timer_us_gettime64();
+#endif
 	static unsigned long long antes=0;
 
 	if (antes)
