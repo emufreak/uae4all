@@ -9,6 +9,8 @@ PROG   = $(NAME)
 
 all: $(PROG)
 
+DEBUG=1
+
 ifneq ($(SBOX_DPKG_INST_ARCH),armel)
 FAME_CORE=1
 endif
