@@ -98,8 +98,6 @@ void uae4all_prof_add(char *msg);
 void uae4all_prof_show(void);
 
 #endif
-
-
 #endif
 
 
