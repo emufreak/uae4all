@@ -98,10 +98,9 @@ void default_prefs ()
     strcpy (prefs_df[0], ROM_PATH_PREFIX "df0.adf");
     strcpy (prefs_df[1], ROM_PATH_PREFIX "df1.adf");
 
-#ifdef DREAMCAST
+#if defined(DREAMCAST) || defined(MAEMO_CHANGES)
     strcpy (romfile, ROM_PATH_PREFIX "kick.rom");
 #else
-//    strcpy (romfile, "/cdrom/kick.rom");
     strcpy (romfile, "kick.rom");
 #endif
 
