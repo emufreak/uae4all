@@ -1,3 +1,4 @@
+*.adf
 *.o
 debian/files
 debian/uae4all.substvars
