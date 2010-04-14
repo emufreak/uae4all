@@ -1,5 +1,13 @@
 uae4all (1rc1-1) fremantle; urgency=low
 
   * Initial packaging.
+  * N900 Makefile.
+  * Using /home/user/MyDocs as KICK.ROM location.
+  * Created Boing Ball icon for UAE4All
+  * Modified SDL renderer for Maemo requirements.
+  * Rendering in 800x480 with 2x software scaler
+    ported from DrNokSnes.
+  * Modified splash screen to be generic.
+  * Fixed keymapping on Maemo (KP_ENTER).
 
- -- Tomasz Sterna <tomek@xiaoka.com>  Sun, 11 Apr 2010 18:46:12 +0200
+ -- Tomasz Sterna <tomek@xiaoka.com>  Wed, 14 Apr 2010 21:36:46 +0200

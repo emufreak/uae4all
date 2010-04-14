@@ -16,6 +16,8 @@ Description: UAE4ALL is an Amiga 500 emulator.
  Bernd Schmidt (the original author and maintainer of UAE), Bernie Meyer
  (the author of the x86 JIT compiler), Toni Wilen (the current maintainer of
  WinUAE), and many more.
+ .
+ You need KICK.ROM in /home/user/MyDocs.
 XSBC-Bugtracker: http://github.com/smokku/uae4all/issues
 XB-Maemo-Display-Name: UAE4All Maemo Edition
 XB-Maemo-Icon-26:
