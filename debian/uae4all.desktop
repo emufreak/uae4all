@@ -9,3 +9,5 @@ Exec=/usr/games/uae4all
 Icon=uae4all
 Categories=Game;
 X-Osso-Type=application/x-executable
+StartupWMClass=uae4all
+Terminal=false
