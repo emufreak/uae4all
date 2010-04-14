@@ -211,6 +211,7 @@ void real_main (int argc, char **argv)
 #ifdef USE_SDL
 #ifdef MAEMO_CHANGES
     putenv("SDL_VIDEO_X11_WMCLASS=uae4all");
+    chdir(ROM_PATH_PREFIX);
 #endif
 //    SDL_Init (SDL_INIT_EVERYTHING | SDL_INIT_NOPARACHUTE);
     SDL_Init (SDL_INIT_VIDEO | SDL_INIT_JOYSTICK 
