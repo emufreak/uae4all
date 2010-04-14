@@ -46,6 +46,10 @@ void guarda(void);
 extern int __sdl_dc_emulate_mouse;
 #endif
 
+#ifdef MAEMO_CHANGES
+#include "maemo/sdlvscalers.h"
+#endif
+
 #include "debug_uae4all.h"
 
 #include "vkbd.h"
@@ -60,6 +64,9 @@ char *gfx_mem=NULL;
 unsigned gfx_rowbytes=0;
 
 Uint32 uae4all_numframes=0;
+
+/** The current scaler object */
+Scaler* scaler = NULL;
 
 #ifdef DEBUG_FRAMERATE
 
@@ -154,13 +161,16 @@ void flush_block (int ystart, int ystop)
 
 void black_screen_now(void)
 {
+	if (scaler)
+	    scaler->prepare();
 	SDL_FillRect(prSDLScreen,NULL,0);
 #ifdef DOUBLEBUFFER
 	SDL_Flip(prSDLScreen);
 #else
 	SDL_UpdateRect(prSDLScreen, 0, 0, current_width, current_height);
 #endif
-
+	if (scaler)
+	    scaler->finish();
 }
 
 static __inline__ int bitsInMask (unsigned long mask)
@@ -259,7 +269,11 @@ static void graphics_subinit (void)
 #ifdef DREAMCAST
 		prSDLScreen = SDL_SetVideoMode(current_width, current_height, 16, uiSDLVidModFlags|VIDEO_FLAGS);
 #else
+#ifdef MAEMO_CHANGES
+		prSDLScreen = SDL_SetVideoMode(PREFS_GFX_WIDTH, PREFS_GFX_HEIGHT, 16, uiSDLVidModFlags|VIDEO_FLAGS);
+#else
 		prSDLScreen = SDL_SetVideoMode(current_width, current_height, 16, uiSDLVidModFlags|VIDEO_FLAGS);
+#endif
 #endif
 	if (prSDLScreen == NULL)
 	{
@@ -276,12 +290,12 @@ static void graphics_subinit (void)
 #ifndef DREAMCAST
 		SDL_LockSurface(prSDLScreen);
 #endif
-		memset(prSDLScreen->pixels, 0, current_width * current_height * prSDLScreen->format->BytesPerPixel);
+		memset(prSDLScreen->pixels, 0, prSDLScreen->w * prSDLScreen->h * prSDLScreen->format->BytesPerPixel);
 #ifndef DREAMCAST
 		SDL_UnlockSurface(prSDLScreen);
 #endif
 #ifndef DOUBLEBUFFER
-		SDL_UpdateRect(prSDLScreen, 0, 0, current_width, current_height);
+		SDL_UpdateRect(prSDLScreen, 0, 0, prSDLScreen->w, prSDLScreen->h);
 #else
 		SDL_Flip(prSDLScreen);
 #endif
@@ -291,9 +305,25 @@ static void graphics_subinit (void)
 		/* Hide mouse cursor */
 		SDL_ShowCursor(SDL_DISABLE);
 #endif
+#ifdef MAEMO_CHANGES
+		/* create scaler */
+		const ScalerFactory* sFactory = searchForScaler(16, GFXVIDINFO_WIDTH, GFXVIDINFO_HEIGHT);
+
+		scaler = sFactory->instantiate(prSDLScreen, GFXVIDINFO_WIDTH, GFXVIDINFO_HEIGHT);
+		gfx_mem = (char *)scaler->getDrawBuffer();
+		gfx_rowbytes = scaler->getDrawBufferPitch();
+#ifdef DEBUG_GFX
+		printf("Video: %dx%d (%dx%d output), %hu bits per pixel, %s\n",
+		    GFXVIDINFO_WIDTH, GFXVIDINFO_HEIGHT,
+		    prSDLScreen->w, prSDLScreen->h,
+		    prSDLScreen->format->BitsPerPixel,
+		    scaler->getName());
+#endif
+#else
 		/* Initialize structure for Amiga video modes */
 		gfx_mem = (char *)prSDLScreen->pixels;
 		gfx_rowbytes = prSDLScreen->pitch;
+#endif
 	}
 #ifdef DEBUG_GFX
 	dbgf("current_height=%i\n",current_height);
@@ -698,6 +728,13 @@ break;
 	    lastmx += rEvent.motion.xrel<<1;
 	    lastmy += rEvent.motion.yrel<<1;
 	    newmousecounters = 1;
+	    break;
+	case SDL_SYSWMEVENT:
+#ifdef DEBUG_EVENTS
+	    dbg("Event: Sys WM Event");
+#endif
+	    if (scaler)
+		scaler->filter(rEvent);
 	    break;
 	}
     }

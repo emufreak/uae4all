@@ -38,6 +38,9 @@ MORE_CFLAGS += -DGP2X -DMAEMO_CHANGES
 ifeq ($(SBOX_DPKG_INST_ARCH),armel)
 MORE_CFLAGS += -mcpu=cortex-a8 -mtune=cortex-a8 -mfloat-abi=softfp -mfpu=neon
 MORE_CFLAGS += -msoft-float -mstructure-size-boundary=32
+MORE_CFLAGS +=  -DSDL_SCALER=\"arm2x\"
+else
+MORE_CFLAGS +=  -DSDL_SCALER=\"soft2x\"
 endif
 
 ifndef DEBUG
@@ -126,6 +129,7 @@ OBJS =	\
 	src/menu/menu_load.o \
 	src/menu/menu_main.o \
 	src/vkbd/vkbd.o \
+	src/maemo/sdlvscalers.o
 
 ifdef FAME_CORE
 CFLAGS+=-DUSE_FAME_CORE
@@ -147,7 +151,7 @@ endif
 CPPFLAGS  = $(CFLAGS)
 
 $(PROG): $(OBJS) 
-	$(CC) $(CFLAGS) -o $(PROG) $(OBJS) $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o $(PROG) $(OBJS) $(LDFLAGS)
 ifndef DEBUG
 	$(STRIP) $(PROG)
 endif

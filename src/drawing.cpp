@@ -47,6 +47,7 @@
 #include "autoconf.h"
 #include "gui.h"
 #include "drawing.h"
+#include "maemo/sdlvscalers.h"
 #include "sound.h"
 #include "debug_uae4all.h"
 
@@ -56,19 +57,6 @@
 #define _INLINE_ 
 #endif
 
-
-#define GFXVIDINFO_PIXBYTES 2
-#define GFXVIDINFO_WIDTH 320
-#define GFXVIDINFO_HEIGHT 240
-#define MAXBLOCKLINES 240
-#define VISIBLE_LEFT_BORDER 72
-#define VISIBLE_RIGHT_BORDER 392
-#define LINETOSCR_X_ADJUST_BYTES 144
-/*
-#define VISIBLE_LEFT_BORDER 64
-#define VISIBLE_RIGHT_BORDER 384
-#define LINETOSCR_X_ADJUST_BYTES 128
-*/
 
 /* The shift factor to apply when converting between Amiga coordinates and window
    coordinates.  Zero if the resolution is the same, positive if window coordinates
@@ -1702,10 +1690,15 @@ static _INLINE_ void do_flush_line (int lineno)
 
 static __inline__ void do_flush_screen (int start, int stop)
 {
+    if (scaler)
+	scaler->prepare();
 
     if (first_block_line != -2) 
 	flush_block (first_block_line, last_block_line);
     
+    if (scaler)
+	scaler->finish();
+
 #ifndef DREAMCAST
     unlockscr ();
 #endif
