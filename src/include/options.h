@@ -26,8 +26,13 @@ extern unsigned prefs_chipmem_size;
 extern int prefs_gfx_framerate, changed_gfx_framerate;
 extern int m68k_speed;
 
+#ifndef MAEMO_CHANGES
 #define PREFS_GFX_WIDTH 320
 #define PREFS_GFX_HEIGHT 240
+#else
+#define PREFS_GFX_WIDTH 800
+#define PREFS_GFX_HEIGHT 480
+#endif
 
 extern void check_prefs_changed_custom (void);
 extern void check_prefs_changed_cpu (void);

@@ -36,7 +36,11 @@ unsigned long long uae4all_prof_executed[UAE4ALL_PROFILER_MAX];
 #include <SDL_dreamcast.h>
 #define VIDEO_FLAGS_INIT SDL_HWSURFACE|SDL_FULLSCREEN
 #else
+#ifndef MAEMO_CHANGES
 #define VIDEO_FLAGS_INIT SDL_HWSURFACE
+#else
+#define VIDEO_FLAGS_INIT SDL_HWSURFACE|SDL_FULLSCREEN
+#endif
 #endif
 
 #ifdef DOUBLEBUFFER
@@ -85,7 +89,11 @@ int gui_init (void)
 #ifdef DREAMCAST
 	prSDLScreen=SDL_SetVideoMode(320,240,16,VIDEO_FLAGS);
 #else
+#ifndef MAEMO_CHANGES
 	prSDLScreen=SDL_SetVideoMode(320,240,16,VIDEO_FLAGS);
+#else
+	prSDLScreen=SDL_SetVideoMode(PREFS_GFX_WIDTH,PREFS_GFX_HEIGHT,16,VIDEO_FLAGS);
+#endif
 #endif
     SDL_ShowCursor(SDL_DISABLE);
     SDL_JoystickEventState(SDL_ENABLE);
