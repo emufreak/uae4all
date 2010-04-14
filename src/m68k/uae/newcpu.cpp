@@ -31,7 +31,11 @@ int *next_vpos=&next_positions[0];
 static unsigned int2doint=0;
 
 #ifdef DEBUG_UAE4ALL
+#ifdef DEBUG_ALWAYS
+int DEBUG_AHORA=1;
+#else
 int DEBUG_AHORA=0;
+#endif
 #endif
 
 // #define DEBUG_INTERRUPTS_EXTRA

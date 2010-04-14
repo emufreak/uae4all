@@ -33,7 +33,11 @@ int uae4all_go_interrupt=0;
 #endif
 
 #ifdef DEBUG_UAE4ALL
+#ifdef DEBUG_ALWAYS
+int DEBUG_AHORA=1;
+#else
 int DEBUG_AHORA=0;
+#endif
 #endif
 
 #ifdef DEBUG_UAE4ALL
