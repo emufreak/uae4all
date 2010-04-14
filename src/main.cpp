@@ -219,6 +219,7 @@ void real_main (int argc, char **argv)
 #endif
 	);
 #endif
+    SDL_ShowCursor(SDL_DISABLE);
 
     default_prefs ();
     
