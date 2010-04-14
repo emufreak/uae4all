@@ -1,0 +1,6 @@
+- Port UAE4All GP2X Cyclone 68k emulator
+
+- Make power and drive LEDs smaller (do not scale)
+- Add exit button in top-right corner
+
+- Write Hildon GUI
