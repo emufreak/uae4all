@@ -220,6 +220,9 @@ static int key_mainMenu(int *cp)
 		else
 		if (event.type == SDL_KEYDOWN)
 		{
+#ifdef DEBUG_KEYS
+			printf("KeyDown: %d\n", event.key.keysym.sym);
+#endif
 			uae4all_play_click();
 			switch(event.key.keysym.sym)
 			{

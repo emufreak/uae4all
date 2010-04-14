@@ -34,3 +34,17 @@ WinUAE), and many more.
 
 
 This is GPL'ed software... respect the license.
+
+
+Menu keymapping:
+<- : A, <-
+-> : D, ->
+^  : W, ^
+v  : S, v
+Cancel : Q, LALT
+Load   : C, LSHIFT
+X      : E, LCTRL
+Y      : X, SPACE
+R      : 1, TAB
+L      : 2, BACKSPACE
+

@@ -253,7 +253,16 @@ static void leftSuperThrottle(void)
 void gui_handle_events (void)
 {
 #ifndef DREAMCAST
+#ifdef DEBUG_KEYS
+	int numkeys, i;
+	Uint8 *keystate = SDL_GetKeyState(&numkeys);
+	printf("Keys: ");
+	for ( i=0; i<numkeys; i++)
+	    if ( keystate[i] ) printf("%d ", i);
+	printf("\n");
+#else
 	Uint8 *keystate = SDL_GetKeyState(NULL);
+#endif
 	if ( keystate[SDLK_PAGEUP] )
 		goSuperThrottle();
 	else
