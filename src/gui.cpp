@@ -221,6 +221,7 @@ static void goMenu(void)
     }
     check_all_prefs();
     gui_purge_events();
+    black_screen_now();
     notice_screen_contents_lost();
 #ifdef DEBUG_FRAMERATE
     uae4all_update_time();
