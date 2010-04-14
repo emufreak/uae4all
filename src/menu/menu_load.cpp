@@ -336,6 +336,7 @@ static int key_loadMenu(int *c)
 				case SDLK_LSHIFT: hit2=1; break;
 				case SDLK_z:
 				case SDLK_RETURN:
+				case SDLK_KP_ENTER:
 				case SDLK_e:
 				case SDLK_LCTRL: hit0=1; break;
 				case SDLK_q:

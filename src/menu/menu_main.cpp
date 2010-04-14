@@ -36,7 +36,11 @@ static char *text_str_off="off";
 static char *text_str_separator="------------------------------";
 static char *text_str_reset="Reset (R)";
 static char *text_str_run="Run (L)";
+#ifdef DREAMCAST
 static char *text_str_exit="Exit - Reboot Dreamcast";
+#else
+static char *text_str_exit="Exit";
+#endif
 
 #if !defined(DEBUG_UAE4ALL) && !defined(PROFILER_UAE4ALL) && !defined(AUTO_RUN) && !defined(AUTO_FRAMERATE)
 int mainMenu_throttle=3;
