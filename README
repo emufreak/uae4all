@@ -43,7 +43,7 @@ Menu keymapping:
 v  : S, v
 Cancel : Q, LALT
 Load   : C, LSHIFT
-X      : E, LCTRL
+X      : E, LCTRL, ENTER
 Y      : X, SPACE
 R      : 1, TAB
 L      : 2, BACKSPACE
