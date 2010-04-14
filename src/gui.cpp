@@ -275,10 +275,17 @@ void gui_handle_events (void)
 		goSuperThrottle();
 	else
 		leftSuperThrottle();
+#ifdef MAEMO_CHANGES
+	if ( keystate[SDLK_MODE] && keystate[SDLK_KP_ENTER] )
+		SDL_WM_ToggleFullScreen(prSDLScreen);
+	else
+	if ( keystate[SDLK_MODE] && keystate[SDLK_BACKSPACE] )
+#else
 	if ( keystate[SDLK_F12] )
 		SDL_WM_ToggleFullScreen(prSDLScreen);
 	else
 	if ( keystate[SDLK_F11] )
+#endif // MAEMO_CHANGES
 #else
 	if (SDL_JoystickGetButton(uae4all_joy0,3) || SDL_JoystickGetButton(uae4all_joy1,3) )
 #endif

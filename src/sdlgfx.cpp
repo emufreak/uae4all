@@ -637,7 +637,7 @@ break;
 #ifdef DEBUG_EVENTS
 	    dbg("Event: key down");
 #endif
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(MAEMO_CHANGES)
 	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP))
 #endif
 	    {
@@ -666,7 +666,7 @@ break;
 #ifdef DEBUG_EVENTS
 	    dbg("Event: key up");
 #endif
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(MAEMO_CHANGES)
 	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP))
 #endif
 	    {
