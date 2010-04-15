@@ -127,6 +127,19 @@ void read_joystick(int nr, unsigned int *dir, int *button)
     }
 #endif
 #endif
+#ifdef MAEMO_CHANGES
+#include "maemo/joystick.h"
+	if (nr == 0)
+	{
+		*dir |= fake_joy0dir;
+		*button |= fake_joy0button;
+	}
+	else if (nr == 1)
+	{
+		*dir |= fake_joy1dir;
+		*button |= fake_joy1button;
+	}
+#endif
 }
 
 void init_joystick(void)

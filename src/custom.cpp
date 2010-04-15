@@ -3602,7 +3602,7 @@ static __inline__ uae_u32 REGPARAM2 custom_wget_1 (uaecptr addr)
      case 0x008: v = DSKDATR (current_hpos ()); break;
 
      case 0x00A: v = JOY0DAT (); break;
-     case 0x00C: v =  JOY1DAT (); break;
+     case 0x00C: v = JOY1DAT (); break;
      case 0x00E: v =  CLXDAT (); break;
      case 0x010: v = ADKCONR (); break;
 

@@ -129,7 +129,8 @@ OBJS =	\
 	src/menu/menu_load.o \
 	src/menu/menu_main.o \
 	src/vkbd/vkbd.o \
-	src/maemo/sdlvscalers.o
+	src/maemo/sdlvscalers.o \
+	src/maemo/joystick.o
 
 ifdef FAME_CORE
 CFLAGS+=-DUSE_FAME_CORE

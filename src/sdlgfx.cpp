@@ -48,6 +48,7 @@ extern int __sdl_dc_emulate_mouse;
 
 #ifdef MAEMO_CHANGES
 #include "maemo/sdlvscalers.h"
+#include "maemo/joystick.h"
 #endif
 
 #include "debug_uae4all.h"
@@ -650,6 +651,9 @@ break;
 			record_key(iAmigaKeyCode << 1);
 		    }
 		}
+#ifdef MAEMO_CHANGES
+		fake_joysticks(rEvent.key.keysym.sym, 1);
+#endif
 	    }
 	    break;
 	case SDL_JOYBUTTONUP:
@@ -676,6 +680,9 @@ break;
 		    uae4all_keystate[iAmigaKeyCode] = 0;
 		    record_key((iAmigaKeyCode << 1) | 1);
 		}
+#ifdef MAEMO_CHANGES
+		fake_joysticks(rEvent.key.keysym.sym, 0);
+#endif
 	    }
 	    break;
 	case SDL_MOUSEBUTTONDOWN:

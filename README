@@ -48,3 +48,7 @@ Y      : X, SPACE
 R      : 1, TAB
 L      : 2, BACKSPACE
 
+Joystick1 keymapping:
+Directions : Arrow Keys, A D W S
+Fire       : SPACE
+

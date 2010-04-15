@@ -1,3 +1,10 @@
+uae4all (1rc1-2) fremantle; urgency=low
+
+  * Fixed mouse position mapping.
+  * Added joystick1 keyboard emulation.
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Fri, 16 Apr 2010 01:39:14 +0200
+
 uae4all (1rc1-1) fremantle; urgency=low
 
   * Initial packaging.
