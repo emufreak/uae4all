@@ -327,8 +327,10 @@ static int key_loadMenu(int *c)
 				case SDLK_a:
 				case SDLK_LEFT: left=1; break;
 				case SDLK_w:
+				case SDLK_PRINT:  /* UP on Maemo SDK SIC! */
 				case SDLK_UP: up=1; break;
 				case SDLK_s:
+				case SDLK_RSUPER: /* DOWN on Maemo SDK SIC! */
 				case SDLK_DOWN: down=1; break;
 				case SDLK_x:
 				case SDLK_SPACE:
