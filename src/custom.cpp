@@ -3432,7 +3432,7 @@ void customreset (void)
     vpos = 0;
 
     if (needmousehack ()) {
-#if 0
+#if MAEMO_CHANGES
 	mousehack_setfollow();
 #else
 	mousehack_setdontcare();

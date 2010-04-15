@@ -725,8 +725,13 @@ break;
 #ifdef DEBUG_EVENTS
 	    dbg("Event: mouse motion");
 #endif
+#ifdef MAEMO_CHANGES
+	    lastmx = (rEvent.motion.x-(PREFS_GFX_WIDTH/2-GFXVIDINFO_WIDTH)) >> 1;
+	    lastmy =  rEvent.motion.y >> 1;
+#else
 	    lastmx += rEvent.motion.xrel<<1;
 	    lastmy += rEvent.motion.yrel<<1;
+#endif
 	    newmousecounters = 1;
 	    break;
 	case SDL_SYSWMEVENT:
