@@ -46,7 +46,7 @@ static char *text_str_exit="Exit";
 
 #if !defined(DEBUG_UAE4ALL) && !defined(PROFILER_UAE4ALL) && !defined(AUTO_RUN) && !defined(AUTO_FRAMERATE)
 #ifndef AUTO_FRAMERATE_THROTTLE
-int mainMenu_throttle=1; // N900 handles this well
+int mainMenu_throttle=0; // N900 handles this well
 #else
 int mainMenu_throttle=3;
 #endif
