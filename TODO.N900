@@ -2,5 +2,6 @@
 
 - Make power and drive LEDs smaller (do not scale)
 - Add exit button in top-right corner
+- Stereo sound
 
 - Write Hildon GUI
