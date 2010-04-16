@@ -5,6 +5,9 @@ static char *menu_msg="                         Amiga emulator "
 #ifdef DINGOO
  "for Dingoo "
 #endif
+#ifdef MAEMO_CHANGES
+ "for Maemo (" APP_VERSION ") "
+#endif
 #endif
  "by Chui.                    Second release Candidate.                               GPL License.                                          ";
 
