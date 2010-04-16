@@ -28,7 +28,7 @@ extern void flush_block (int, int);
 extern void flush_screen (int, int);
 void black_screen_now(void);
 
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(DINGOO)
 extern int lockscr (void);
 extern void unlockscr (void);
 #endif

@@ -31,11 +31,12 @@ int *next_vpos=&next_positions[0];
 static unsigned int2doint=0;
 
 #ifdef DEBUG_UAE4ALL
-#ifdef DEBUG_ALWAYS
+#if !defined(START_DEBUG) || START_DEBUG==0 
 int DEBUG_AHORA=1;
 #else
 int DEBUG_AHORA=0;
 #endif
+FILE *DEBUG_STR_FILE=NULL;
 #endif
 
 // #define DEBUG_INTERRUPTS_EXTRA
@@ -954,6 +955,17 @@ void m68k_reset (void)
     uae_regs.kick_mask = 0x00F80000;
     uae_regs.spcflags = 0;
 
+    if (savestate_state == STATE_RESTORE)
+    {
+	    m68k_setpc (uae_regs.pc);
+	    uae_regs.s = (uae_regs.sr >> 13) & 1;
+	    MakeFromSR();
+	    if (uae_regs.s)
+		_68k_areg(7) = uae_regs.isp;
+	    else
+		_68k_areg(7) = uae_regs.usp;
+	    return;
+    }
     _68k_areg(7) = get_long (0x00f80000);
     m68k_setpc (get_long (0x00f80004));
     refill_prefetch (m68k_getpc (), 0);
@@ -1194,6 +1206,7 @@ static int do_specialties (int cycles)
 	set_special (SPCFLAG_DOINT);
     }
     if (uae_regs.spcflags & SPCFLAG_BRK ) {
+printf("BRK state=%X, flags=%X, PC=%X\n",savestate_state,_68k_spcflags,_68k_getpc());fflush(stdout);
 	unset_special (SPCFLAG_BRK);
 	return 1;
     }
@@ -1272,14 +1285,20 @@ void m68k_go (int may_quit)
 
     in_m68k_go++;
     for (;;) {
+printf("m68k_go state=%X, flags=%X, PC=%X\n",savestate_state,_68k_spcflags,_68k_getpc());fflush(stdout);
 	if (quit_program > 0) {
 	    if (quit_program == 1)
 		break;
 	    quit_program = 0;
+	    if (savestate_state == STATE_RESTORE) {
+puts("Restaurando");fflush(stdout);
+		    restore_state (savestate_filename);
+	    }
 	    m68k_reset ();
 	    reset_all_systems ();
 	    customreset ();
 	    /* We may have been restoring state, but we're done now. */
+	    savestate_restore_finish ();
 	    handle_active_events ();
 	    if (uae_regs.spcflags)
 		do_specialties (0);
@@ -1362,4 +1381,105 @@ void check_prefs_changed_cpu (void)
 
 	}
 	next_vpos[511]=0;
+}
+
+/* CPU save/restore code */
+
+#define CPUTYPE_EC 1
+#define CPUMODE_HALT 1
+
+uae_u8 *restore_cpu (uae_u8 *src)
+{
+    int i,model,flags;
+    uae_u32 l;
+
+    model = restore_u32();
+#if 0
+    switch (model) {
+    case 68000:
+	currprefs.cpu_level = 0;
+	break;
+    case 68010:
+	currprefs.cpu_level = 1;
+	break;
+    case 68020:
+	currprefs.cpu_level = 2;
+	break;
+    default:
+	write_log ("Unknown cpu type %d\n", model);
+	break;
+    }
+#endif
+
+    flags = restore_u32();
+//    currprefs.address_space_24 = 0;
+//    if (flags & CPUTYPE_EC)
+//	currprefs.address_space_24 = 1;
+    for (i = 0; i < 15; i++)
+	uae_regs.uae_regs[i] = restore_u32 ();
+    uae_regs.pc = restore_u32 ();
+    /* We don't actually use this - we deliberately set prefetch_pc to a
+       zero so that prefetch isn't used for the first insn after a state
+       restore.  */
+    uae_regs.prefetch = restore_u32 ();
+    uae_regs.prefetch_pc = uae_regs.pc + 128;
+    uae_regs.usp = restore_u32 ();
+    uae_regs.isp = restore_u32 ();
+    uae_regs.sr = restore_u16 ();
+    l = restore_u32();
+    if (l & CPUMODE_HALT) {
+	uae_regs.stopped = 1;
+	set_special (SPCFLAG_STOP);
+    } else
+	uae_regs.stopped = 0;
+#if 0
+    if (model >= 68010) {
+	regs.dfc = restore_u32 ();
+	regs.sfc = restore_u32 ();
+	regs.vbr = restore_u32 ();
+    }
+    if (model >= 68020) {
+	caar = restore_u32 ();
+	cacr = restore_u32 ();
+	uae_regs.msp = restore_u32 ();
+    }
+#endif
+    write_log ("CPU %d%s%03d, PC=%08.8X\n",
+	       model/1000, flags & 1 ? "EC" : "", model % 1000, uae_regs.pc);
+
+    return src;
+}
+
+
+uae_u8 *save_cpu (int *len)
+{
+    uae_u8 *dstbak,*dst;
+    int model,i;
+
+    dstbak = dst = (uae_u8 *)malloc(4+4+15*4+4+4+4+4+2+4+4+4+4+4+4+4);
+    model = 68000;
+    save_u32 (model);					/* MODEL */
+    save_u32 (1); //currprefs.address_space_24 ? 1 : 0);	/* FLAGS */
+    for(i = 0;i < 15; i++) save_u32 (uae_regs.uae_regs[i]);	/* D0-D7 A0-A6 */
+    save_u32 (m68k_getpc ());				/* PC */
+    save_u32 (uae_regs.prefetch);				/* prefetch */
+    MakeSR ();
+    save_u32 (!uae_regs.s ? uae_regs.uae_regs[15] : uae_regs.usp);	/* USP */
+    save_u32 (uae_regs.s ? uae_regs.uae_regs[15] : uae_regs.isp);	/* ISP */
+    save_u16 (uae_regs.sr);				/* SR/CCR */
+    save_u32 (uae_regs.stopped ? CPUMODE_HALT : 0);	/* flags */
+#if 0
+    if(model >= 68010) {
+	save_u32 (regs.dfc);				/* DFC */
+	save_u32 (regs.sfc);				/* SFC */
+	save_u32 (regs.vbr);				/* VBR */
+    }
+    if(model >= 68020) {
+	save_u32 (caar);				/* CAAR */
+	save_u32 (cacr);				/* CACR */
+	save_u32 (regs.msp);				/* MSP */
+    }
+#endif
+    *len = dst - dstbak;
+    return dstbak;
 }

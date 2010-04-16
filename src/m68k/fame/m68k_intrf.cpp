@@ -33,10 +33,13 @@ int uae4all_go_interrupt=0;
 #endif
 
 #ifdef DEBUG_UAE4ALL
-#ifdef DEBUG_ALWAYS
+#if !defined(START_DEBUG) || START_DEBUG==0 
 int DEBUG_AHORA=1;
 #else
 int DEBUG_AHORA=0;
+#endif
+#ifdef DEBUG_FILE
+FILE *DEBUG_STR_FILE=NULL;
 #endif
 #endif
 
@@ -114,12 +117,12 @@ static unsigned timeslice_shift=6;
 int next_positions[512];
 int *next_vpos=&next_positions[0];
 
-struct M68K_CONTEXT micontexto;
-struct M68K_PROGRAM miprograma[257];
-struct M68K_DATA midato_read_8[257];
-struct M68K_DATA midato_read_16[257];
-struct M68K_DATA midato_write_8[257];
-struct M68K_DATA midato_write_16[257];
+M68K_CONTEXT micontexto;
+M68K_PROGRAM miprograma[257];
+M68K_DATA midato_read_8[257];
+M68K_DATA midato_read_16[257];
+M68K_DATA midato_write_8[257];
+M68K_DATA midato_write_16[257];
 static unsigned micontexto_fpa[256];
 
 unsigned mispcflags=0;
@@ -217,6 +220,9 @@ static int do_specialties (int cycles)
 #endif
 
     if (mispcflags & SPCFLAG_BRK) {
+#ifdef DEBUG_SAVESTATE
+	printf("BRK state=%X, flags=%X, PC=%X\n",savestate_state,_68k_spcflags,_68k_getpc());fflush(stdout);
+#endif
         unset_special (SPCFLAG_BRK);
         return 1;
     }
@@ -254,7 +260,6 @@ static void uae4all_reset(void)
 
 static void m68k_run (void)
 {
-	uae4all_reset ();
 	unsigned cycles, cycles_actual=M68KCONTEXT.cycles_counter;
 	for (;;) {
 #ifdef DEBUG_M68K
@@ -365,18 +370,39 @@ void m68k_go (int may_quit)
 #endif
     quit_program = 2;
     for (;;) {
+#ifdef DEBUG_SAVESTATE
+	printf("m68k_go state=%X, flags=%X, PC=%X\n",savestate_state,_68k_spcflags,_68k_getpc());fflush(stdout);
+#endif
         if (quit_program > 0) {
             if (quit_program == 1)
                 break;
             quit_program = 0;
+	    if (savestate_state == STATE_RESTORE)
+	    {
+#ifdef DEBUG_SAVESTATE
+		    puts("Restaurando");fflush(stdout);
+#endif
+		    restore_state (savestate_filename);
+		    mispcflags = 0;
+//		    _m68k_setpc(M68KCONTEXT.pc);
+	    }
             reset_all_systems ();
+#ifdef DEBUG_SAVESTATE
+	    printf("-->reset_all_systems state=%X, flags=%X, PC=%X\n",savestate_state,_68k_spcflags,_68k_getpc());fflush(stdout);
+#endif
             customreset ();
+#ifdef DEBUG_SAVESTATE
+	    printf("-->customreset state=%X, flags=%X, PC=%X\n",savestate_state,_68k_spcflags,_68k_getpc());fflush(stdout);
+#endif
             /* We may have been restoring state, but we're done now.  */
             handle_active_events ();
             if (mispcflags)
                 do_specialties (0);
         }
 
+	if (!savestate_state)
+		uae4all_reset ();
+	savestate_restore_finish ();
         m68k_run();
     }
 #if !defined(DREAMCAST) || defined(DEBUG_UAE4ALL)
@@ -522,31 +548,31 @@ void init_memmaps(addrbank* banco)
 {
 	unsigned i;
 
-	memset(&micontexto,0,sizeof(struct M68K_CONTEXT));
+	memset(&micontexto,0,sizeof(M68K_CONTEXT));
 
 	memset(&micontexto_fpa,0,sizeof(unsigned)*256);
 
-	micontexto_fpa[0x10]=(unsigned)&uae_chk_handler;
-//	micontexto_fpa[0x2c]=(unsigned)&uae_chk_handler;
+	micontexto_fpa[0x04]=(unsigned)&uae_chk_handler;
+//	micontexto_fpa[0x10]=(unsigned)&uae_chk_handler; // FAME BUG !!!
 	micontexto.icust_handler = (unsigned int*)&micontexto_fpa;
 
-	micontexto.fetch=(struct M68K_PROGRAM *)&miprograma;
-	micontexto.read_byte=(struct M68K_DATA *)&midato_read_8;
-	micontexto.read_word=(struct M68K_DATA *)&midato_read_16;
-	micontexto.write_byte=(struct M68K_DATA *)&midato_write_8;
-	micontexto.write_word=(struct M68K_DATA *)&midato_write_16;
+	micontexto.fetch=(M68K_PROGRAM *)&miprograma;
+	micontexto.read_byte=(M68K_DATA *)&midato_read_8;
+	micontexto.read_word=(M68K_DATA *)&midato_read_16;
+	micontexto.write_byte=(M68K_DATA *)&midato_write_8;
+	micontexto.write_word=(M68K_DATA *)&midato_write_16;
 
-	micontexto.sv_fetch=(struct M68K_PROGRAM *)&miprograma;
-	micontexto.sv_read_byte=(struct M68K_DATA *)&midato_read_8;
-	micontexto.sv_read_word=(struct M68K_DATA *)&midato_read_16;
-	micontexto.sv_write_byte=(struct M68K_DATA *)&midato_write_8;
-	micontexto.sv_write_word=(struct M68K_DATA *)&midato_write_16;
+	micontexto.sv_fetch=(M68K_PROGRAM *)&miprograma;
+	micontexto.sv_read_byte=(M68K_DATA *)&midato_read_8;
+	micontexto.sv_read_word=(M68K_DATA *)&midato_read_16;
+	micontexto.sv_write_byte=(M68K_DATA *)&midato_write_8;
+	micontexto.sv_write_word=(M68K_DATA *)&midato_write_16;
 	
-	micontexto.user_fetch=(struct M68K_PROGRAM *)&miprograma;
-	micontexto.user_read_byte=(struct M68K_DATA *)&midato_read_8;
-	micontexto.user_read_word=(struct M68K_DATA *)&midato_read_16;
-	micontexto.user_write_byte=(struct M68K_DATA *)&midato_write_8;
-	micontexto.user_write_word=(struct M68K_DATA *)&midato_write_16;
+	micontexto.user_fetch=(M68K_PROGRAM *)&miprograma;
+	micontexto.user_read_byte=(M68K_DATA *)&midato_read_8;
+	micontexto.user_read_word=(M68K_DATA *)&midato_read_16;
+	micontexto.user_write_byte=(M68K_DATA *)&midato_write_8;
+	micontexto.user_write_word=(M68K_DATA *)&midato_write_16;
 
 	micontexto.reset_handler=NULL;
 	micontexto.iack_handler=NULL;
@@ -779,4 +805,67 @@ void check_prefs_changed_cpu (void)
 
 	}
 	next_vpos[511]=0;
+}
+
+/* CPU save/restore code */
+
+#define CPUTYPE_EC 1
+#define CPUMODE_HALT 1
+
+uae_u8 *restore_cpu (uae_u8 *src)
+{
+    int i,model,flags;
+    uae_u32 l;
+
+    model = restore_u32();
+    flags = restore_u32();
+    for (i = 0; i < 8; i++)
+	    _68k_dreg(i)=restore_u32 ();
+    for (i = 0; i < 8; i++)
+	    _68k_areg(i)=restore_u32 ();
+    _68k_setpc(restore_u32 ());
+    /* We don't actually use this - we deliberately set prefetch_pc to a
+       zero so that prefetch isn't used for the first insn after a state
+       restore.  */
+    /* uae_regs.prefetch = */ restore_u32 ();
+    /* uae_regs.prefetch_pc =  uae_regs.pc + 128; */
+    _68k_mspreg = restore_u32 ();
+    /* uae_regs.isp = */ restore_u32 ();
+    _68k_sreg = restore_u16 ();
+    l = restore_u32();
+    if (l & CPUMODE_HALT) {
+	M68KCONTEXT.execinfo|=0x0080;
+	mispcflags=SPCFLAG_STOP;
+    } else {
+	M68KCONTEXT.execinfo&=~0x0080;
+	mispcflags=0;
+    }
+    write_log ("CPU %d%s%03d, PC=%08.8X\n",
+	       model/1000, flags & 1 ? "EC" : "", model % 1000, _68k_getpc());
+
+    return src;
+}
+
+
+uae_u8 *save_cpu (int *len)
+{
+    uae_u8 *dstbak,*dst;
+    int model,i;
+
+    dstbak = dst = (uae_u8 *)malloc(4+4+15*4+4+4+4+4+2+4+4+4+4+4+4+4);
+    model = 68000;
+    save_u32 (model);					/* MODEL */
+    save_u32 (1); //currprefs.address_space_24 ? 1 : 0);	/* FLAGS */
+    for(i = 0;i < 8; i++)
+	    save_u32 (_68k_dreg(i));
+    for(i = 0;i < 8; i++)
+	    save_u32 (_68k_areg(i));
+    save_u32 (_68k_getpc ());				/* PC */
+    save_u32 (0); //uae_regs.prefetch);				/* prefetch */
+    save_u32 (_68k_mspreg);
+    save_u32 (_68k_areg(7));
+    save_u16 (_68k_sreg);				/* SR/CCR */
+    save_u32 (M68KCONTEXT.execinfo&0x0080 ? CPUMODE_HALT : 0);	/* flags */
+    *len = dst - dstbak;
+    return dstbak;
 }

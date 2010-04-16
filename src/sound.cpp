@@ -316,7 +316,8 @@ int setup_sound (void)
     spec.samples = SNDBUFFER_LEN>>1;
     spec.callback = sound_callback;
     spec.userdata = NULL;
-#if !defined(DREAMCAST) && !defined(WIN32)
+// #ifndef DREAMCAST
+#if 0
     if (SDL_OpenAudio (&spec, NULL) < 0) {
 	write_log ("Couldn't open audio: %s\n", SDL_GetError());
 	return 0;
@@ -349,10 +350,16 @@ static int open_sound (void)
 
 #ifndef MENU_MUSIC
     if (!passed)
-	if (SDL_OpenAudio (&spec, NULL) < 0) {
+{
+//printf("SDL_OpenAudio %i %i %i\n",spec.freq,spec.channels,spec.samples);
+	if (SDL_OpenAudio (&spec, NULL) < 0)
+	{
+//puts(SDL_GetError()); exit(0);
 		write_log (stderr, "Couldn't open audio: %s\n", SDL_GetError());
 		return 0;
     	}
+//puts("DESPUES");
+}
 #else
     SDL_PauseAudio (1);
     Mix_HookMusic(&sound_callback,NULL);

@@ -15,10 +15,14 @@ extern void finish_sound_buffer (void);
 
 #define DEFAULT_SOUND_BITS 16
 
-#if defined(NO_THREADS) || defined(WIN32)
+#ifdef DREAMCAST
 #define DEFAULT_SOUND_FREQ 22050
 #else
+#ifdef DINGOO
+#define DEFAULT_SOUND_FREQ 16000
+#else
 #define DEFAULT_SOUND_FREQ 44100
+#endif
 #endif
 
 extern void sound_default_evtime(void);

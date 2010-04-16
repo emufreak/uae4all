@@ -9,11 +9,15 @@ PROG   = $(NAME)
 
 all: $(PROG)
 
-#DEBUG=on
+#DEBUG=1
 
 ifneq ($(SBOX_DPKG_INST_ARCH),armel)
 FAME_CORE=1
+else
+FAME_CORE_C=1
 endif
+
+LIB7Z=1
 
 DEFAULT_CFLAGS = $(shell sdl-config --cflags)
 LDFLAGS        = $(shell sdl-config --libs) -lSDL_mixer -lz
@@ -21,11 +25,10 @@ LDFLAGS        = $(shell sdl-config --libs) -lSDL_mixer -lz
 
 MORE_CFLAGS = -O3  -Isrc/ -Isrc/include/ -Isrc/menu -Isrc/vkbd \
 	-fomit-frame-pointer -fno-exceptions \
-	-Wno-unused -Wno-format \
+	-Wno-unused -Wno-format -DUSE_SDL \
 	-DGCCCONSTFUNC="__attribute__((const))" -DUSE_UNDERSCORE \
 	-DREGPARAM="__attribute__((regparm(3)))" -DOPTIMIZED_FLAGS -D__inline__=__inline__ \
-	-DSHM_SUPPORT_LINKS=0 -DOS_WITHOUT_MEMORY_MANAGEMENT -DVKBD_ALWAYS \
-	-DMENU_MUSIC -DUSE_SDL -DDOUBLEBUFFER
+	-DSHM_SUPPORT_LINKS=0 -DOS_WITHOUT_MEMORY_MANAGEMENT -DVKBD_ALWAYS
 
 
 MORE_CFLAGS += \
@@ -55,6 +58,8 @@ endif
 
 ASFLAGS += -mcpu=cortex-a8 -mfloat-abi=softfp -mfpu=neon
 
+#MORE_CFLAGS+= -DDOUBLEBUFFER
+MORE_CFLAGS+= -DMENU_MUSIC
 #MORE_CFLAGS+= -DUSE_AUTOCONFIG
 #MORE_CFLAGS+= -DUAE_CONSOLE
 
@@ -64,7 +69,13 @@ MORE_CFLAGS+= -DUSE_ZFILE
 
 #MORE_CFLAGS+= -DNO_SOUND
 #MORE_CFLAGS+= -DNO_THREADS
+#MORE_CFLAGS+= -DEXACT_AUDIO
+#MORE_CFLAGS+= -DSOUND_AHI
+#MORE_CFLAGS+= -DCUT_COPPER
+#MORE_CFLAGS+= -DEXACT_CURRENT_HPOS
+#MORE_CFLAGS+= -DUSE_SPECIAL_MEM
 
+MORE_CFLAGS+= -DEMULATED_JOYSTICK
 MORE_CFLAGS+= -DFAME_INTERRUPTS_PATCH
 #MORE_CFLAGS+= -DFAME_INTERRUPTS_SECURE_PATCH
 
@@ -81,25 +92,31 @@ MORE_CFLAGS+= -DFAME_INTERRUPTS_PATCH
 #MORE_CFLAGS+= -DDEBUG_CIA
 #MORE_CFLAGS+= -DDEBUG_SOUND
 #MORE_CFLAGS+= -DDEBUG_MEMORY
+#MORE_CFLAGS+= -DDEBUG_MAPPINGS
 #MORE_CFLAGS+= -DDEBUG_DISK
 #MORE_CFLAGS+= -DDEBUG_CUSTOM
 #MORE_CFLAGS+= -DDEBUG_EVENTS
-#MORE_CFLAGS+= -DDEBUG_GFX #-DDEBUG_BLITTER
+#MORE_CFLAGS+= -DDEBUG_SAVESTATE
+#MORE_CFLAGS+= -DDEBUG_GFX -DDEBUG_BLITTER
 #MORE_CFLAGS+= -DDEBUG_FRAMERATE
 #MORE_CFLAGS+= -DAUTO_FRAMERATE=1400
 #MORE_CFLAGS+= -DMAX_AUTO_FRAMERATE=4400
 #MORE_CFLAGS+= -DAUTO_FRAMERATE_SOUND
 #MORE_CFLAGS+= -DSTART_DEBUG=2609
+#MORE_CFLAGS+= -DAUTO_SAVESTATE=100
 #MORE_CFLAGS+= -DMAX_AUTOEVENTS=2610
 #MORE_CFLAGS+= -DAUTO_RUN
 #MORE_CFLAGS+= -DDEBUG_KEYS
 
 
 #MORE_CFLAGS+= -DPROFILER_UAE4ALL
+#MORE_CFLAGS+= -DAUTO_PROFILER=4000
+#MORE_CFLAGS+= -DMAX_AUTO_PROFILER=5000
 
 CFLAGS  = $(DEFAULT_CFLAGS) $(MORE_CFLAGS)
 
 OBJS =	\
+	src/savestate.o \
 	src/audio.o \
 	src/autoconf.o \
 	src/blitfunc.o \
@@ -127,18 +144,49 @@ OBJS =	\
 	src/menu/fade.o \
 	src/menu/menu.o \
 	src/menu/menu_load.o \
+	src/menu/menu_save.o \
 	src/menu/menu_main.o \
 	src/vkbd/vkbd.o \
-	src/maemo/sdlvscalers.o \
-	src/maemo/joystick.o
+	src/maemo/sdlvscalers.o
+
+ifdef LIB7Z
+CFLAGS+=-DUSE_LIB7Z
+OBJS+= \
+	src/lib7z/7zAlloc.o \
+	src/lib7z/7zBuf2.o \
+	src/lib7z/7zBuf.o \
+	src/lib7z/7zCrc.o \
+	src/lib7z/7zDecode.o \
+	src/lib7z/7zExtract.o \
+	src/lib7z/7zFile.o \
+	src/lib7z/7zHeader.o \
+	src/lib7z/7zIn.o \
+	src/lib7z/7zItem.o \
+	src/lib7z/7zStream.o \
+	src/lib7z/Alloc.o \
+	src/lib7z/Bcj2.o \
+	src/lib7z/Bra86.o \
+	src/lib7z/BraIA64.o \
+	src/lib7z/Bra.o \
+	src/lib7z/LzFind.o \
+	src/lib7z/LzmaDec.o \
+	src/lib7z/LzmaEnc.o \
+	src/lib7z/lzma.o
+endif
 
 ifdef FAME_CORE
+ifdef FAME_CORE_C
+#CFLAGS+=-DUSE_FAME_CORE -DUSE_FAME_CORE_C -DFAME_INLINE_LOOP -DFAME_IRQ_CLOCKING -DFAME_CHECK_BRANCHES -DFAME_EMULATE_TRACE -DFAME_DIRECT_MAPPING -DFAME_BYPASS_TAS_WRITEBACK -DFAME_ACCURATE_TIMING -DFAME_GLOBAL_CONTEXT -DFAME_FETCHBITS=8 -DFAME_DATABITS=8 -DFAME_GOTOS -DFAME_EXTRA_INLINE=__inline__ -DFAME_NO_RESTORE_PC_MASKED_BITS
+CFLAGS+=-DUSE_FAME_CORE -DUSE_FAME_CORE_C -DFAME_IRQ_CLOCKING -DFAME_CHECK_BRANCHES -DFAME_EMULATE_TRACE -DFAME_DIRECT_MAPPING -DFAME_BYPASS_TAS_WRITEBACK -DFAME_ACCURATE_TIMING -DFAME_GLOBAL_CONTEXT -DFAME_FETCHBITS=8 -DFAME_DATABITS=8 -DFAME_NO_RESTORE_PC_MASKED_BITS
+src/m68k/fame/famec.o: src/m68k/fame/famec.cpp
+OBJS += src/m68k/fame/famec.o
+else
 CFLAGS+=-DUSE_FAME_CORE
 src/m68k/fame/fame.o: src/m68k/fame/fame.asm
 	nasm -f elf src/m68k/fame/fame.asm
-OBJS += \
-	src/m68k/fame/fame.o \
-	src/m68k/fame/m68k_intrf.o
+OBJS += src/m68k/fame/fame.o
+endif
+OBJS += src/m68k/fame/m68k_intrf.o
 else
 OBJS += \
 	src/m68k/uae/newcpu.o \
@@ -147,6 +195,7 @@ OBJS += \
 	src/m68k/uae/fpp.o \
 	src/m68k/uae/cpustbl.o \
 	src/m68k/uae/cpuemu.o
+
 endif
 
 CPPFLAGS  = $(CFLAGS)

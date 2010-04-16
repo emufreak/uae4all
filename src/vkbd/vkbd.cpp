@@ -10,9 +10,11 @@ int vkbd_mode=0;
 int vkbd_move=0;
 SDLKey vkbd_key=(SDLKey)0;
 SDLKey vkbd_button2=(SDLKey)0;
+SDLKey vkbd_button3=(SDLKey)0;
+SDLKey vkbd_button4=(SDLKey)0;
 int vkbd_keysave=-1234567;
 
-#ifndef DREAMCAST
+#ifdef NO_VKBD
 
 int vkbd_init(void) { return 0; }
 void vkbd_init_button2(void) { }
@@ -25,7 +27,7 @@ SDLKey vkbd_process(void) { return (SDLKey)0; }
 
 extern SDL_Surface *prSDLScreen;
 
-static SDL_Surface *ksur, *vkey[MAX_KEY];
+static SDL_Surface *ksur, *kmou, *vkey[MAX_KEY];
 
 static int vkbd_actual=0, vkbd_color=0;
 
@@ -143,6 +145,8 @@ static t_vkbd_rect vkbd_rect[]=
 void vkbd_init_button2(void)
 {
 	vkbd_button2=(SDLKey)0;
+	vkbd_button3=(SDLKey)0;
+	vkbd_button4=(SDLKey)0;
 }
 
 
@@ -169,12 +173,22 @@ int vkbd_init(void)
 		vkey[i]=SDL_DisplayFormat(tmp);
 		SDL_FreeSurface(tmp);
 	}
+	tmp=SDL_LoadBMP(DATA_PREFIX "mouse.bmp");
+	if (tmp==NULL)
+	{
+		printf("Emulated Mouse Bitmap Error: %s\n",SDL_GetError());
+		return -1;
+	}
+	kmou=SDL_DisplayFormat(tmp);
+	SDL_FreeSurface(tmp);
 	vkbd_actual=0;
-	vkbd_redraw();
+//	vkbd_redraw();
 	vkbd_mode=0;
 	vkbd_move=0;
 	vkbd_key=(SDLKey)0;
 	vkbd_button2=(SDLKey)0;
+	vkbd_button3=(SDLKey)0;
+	vkbd_button4=(SDLKey)0;
 	vkbd_keysave=-1234567;
 	return 0;
 }
@@ -183,6 +197,7 @@ int vkbd_init(void)
 void vkbd_quit(void)
 {
 	int i;
+	SDL_FreeSurface(kmou);
 	for(i=0;i<MAX_KEY;i++)
 		SDL_FreeSurface(vkey[i]);
 	SDL_FreeSurface(ksur);
@@ -197,6 +212,16 @@ void vkbd_redraw(void)
 	r.w=ksur->w;
 	r.h=ksur->h;
 	SDL_BlitSurface(ksur,NULL,prSDLScreen,&r);
+}
+
+void vkbd_mouse(void)
+{
+	SDL_Rect r;
+	r.x=0;
+	r.y=prSDLScreen->h-24;
+	r.w=kmou->w;
+	r.h=kmou->h;
+	SDL_BlitSurface(kmou,NULL,prSDLScreen,&r);
 }
 
 SDLKey vkbd_process(void)
@@ -219,6 +244,20 @@ SDLKey vkbd_process(void)
 	{
 		vkbd_move=0;
 		vkbd_button2=vkbd_rect[vkbd_actual].key;
+		return (SDLKey)0;
+	}
+	else
+	if (vkbd_move&VKBD_BUTTON3)
+	{
+		vkbd_move=0;
+		vkbd_button3=vkbd_rect[vkbd_actual].key;
+		return (SDLKey)0;
+	}
+	else
+	if (vkbd_move&VKBD_BUTTON4)
+	{
+		vkbd_move=0;
+		vkbd_button4=vkbd_rect[vkbd_actual].key;
 		return (SDLKey)0;
 	}
 	if (canmove)

@@ -81,6 +81,12 @@ char *colormodes[] = { "256 colors", "32768 colors", "65536 colors",
     "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
 };
 
+#ifdef DINGOO
+void dingoo_set_clock(unsigned int mhz);
+#else
+#define dingoo_set_clock()
+#endif
+
 void discard_prefs ()
 {
 }
@@ -116,7 +122,7 @@ void uae_reset (void)
     if (quit_program == 0)
 	quit_program = -2;
 */  
-    black_screen_now();
+//    black_screen_now();
     quit_program = 2;
     set_special (SPCFLAG_BRK);
 }
@@ -265,6 +271,7 @@ void real_main (int argc, char **argv)
 #endif
     gui_update ();
 
+//    dingoo_set_clock(430);
     if (graphics_init ())
 		start_program ();
     leave_program ();
@@ -281,12 +288,12 @@ int main (int argc, char **argv)
 	}
 #endif
 #endif
+#ifdef DEBUG_FILE
+    DEBUG_STR_FILE=fopen(DEBUG_FILE,"wt");
+#endif
+
     real_main (argc, argv);
     return 0;
-}
-
-void lanada(void)
-{
 }
 
 #endif

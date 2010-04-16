@@ -33,7 +33,9 @@
 #include "xwin.h"
 #include "osemu.h"
 #include "execlib.h"
+#include "savestate.h"
 
+#define maxhpos MAXHPOS
 
 char prefs_df[NUM_DRIVES][128];
 char changed_df[NUM_DRIVES][128];
@@ -1462,6 +1464,9 @@ void DISK_reset (void)
 #endif
     int i;
 
+    if (savestate_state)
+	    return;
+
     disk_hpos = 0;
     disk_data_used = 0;
     disabled = 0;
@@ -1481,29 +1486,11 @@ void DISK_reset (void)
     }
 }
 
-#if 0
-
-void dumpdisk (void)
-{
-#ifdef DEBUG_DISK
-    dbg("disc.c : dumpdisk");
-#endif
-    int i;
-    for (i = 0; i < NUM_DRIVES; i++) {
-	drive *drv = &floppy[i];
-#ifdef DEBUG_DISK
-	dbgf ("Drive %d: motor %s cylinder %2d selected %d\n", i, drv->motoroff ? "off" : " on", drv->cyl, selected & (1 << i));
-#endif
-    }
-}
 
 /* Disk save/restore code */
 
 void DISK_save_custom (uae_u32 *pdskpt, uae_u16 *pdsklength, uae_u16 *pdsksync, uae_u16 *pdskdatr, uae_u16 *pdskbytr)
 {
-#ifdef DEBUG_DISK
-    dbg("disc.c : DISK_save_custom");
-#endif
     if(pdskpt) *pdskpt = dskpt;
     if(pdsklength) *pdsklength = dsklength;
     if(pdsksync) *pdsksync = dsksync;
@@ -1513,11 +1500,143 @@ void DISK_save_custom (uae_u32 *pdskpt, uae_u16 *pdsklength, uae_u16 *pdsksync, 
 
 void DISK_restore_custom (uae_u32 pdskpt, uae_u16 pdsklength, uae_u16 pdskdatr, uae_u16 pdskbytr)
 {
-#ifdef DEBUG_DISK
-    dbg("disc.c : DISK_restore_custom");
-#endif
     dskpt = pdskpt;
     dsklength = pdsklength;
     dskbytr_tab[0] = pdskbytr;
 }
-#endif
+
+uae_u8 *restore_disk(int num,uae_u8 *src)
+{
+    drive *drv;
+    uae_u32 drive_id, mfmpos;
+    int state;
+    uae_u8 cyl, dskready, drive_id_scnt;
+
+    drive_id=restore_u32 ();
+    state=restore_u8 ();
+    cyl=restore_u8 ();
+    dskready=restore_u8 ();
+    drive_id_scnt=restore_u8 ();
+    mfmpos = restore_u32 ();
+    restore_u32 ();
+
+    if (num<NUM_DRIVES)
+    {
+    	drv = &floppy[num];
+    	disabled &= ~(1 << num);
+  	  drv->drive_id = drive_id;
+    	if (state & 2)
+       		disabled |= 1 << num;
+    	else
+       		drv->motoroff = (state & 1) ? 0 : 1;
+    	drv->cyl = cyl;
+    	drv->dskready = dskready;
+    	drv->drive_id_scnt = drive_id_scnt;
+    	drv->mfmpos = mfmpos;
+    	strncpy(changed_df[num],(char *)src,127);
+    	changed_df[num][127] = 0;
+	{
+		FILE *f=fopen(changed_df[num],"rb");
+		extern char uae4all_image_file[128];
+		extern char uae4all_image_file2[128];
+		if (f)
+		{
+			fclose(f);
+			if (!num)
+			{
+				if (strcmp(uae4all_image_file,changed_df[0]))
+				{
+    					strcpy(uae4all_image_file,changed_df[0]);
+					real_changed_df[num] = 1;
+				}
+			}
+ 			else
+			{
+				if (strcmp(uae4all_image_file2,changed_df[1]))
+				{
+					strcpy(uae4all_image_file2,changed_df[1]);
+					real_changed_df[num] = 1;
+				}
+			}
+		}
+	}
+    }
+    else
+    {
+ 	    extern int mainMenu_throttle;
+	    m68k_speed=mainMenu_throttle=mfmpos;
+	    check_prefs_changed_cpu();
+    }
+
+    src = (uae_u8 *)(((unsigned)src)+strlen((char *)src) + 1);
+
+    return src;
+}
+
+uae_u8 *save_disk(int num,int *len)
+{
+    uae_u8 *dstbak,*dst;
+    drive *drv;
+
+    dstbak = dst = (uae_u8 *)malloc (2+1+1+1+1+4+4+256);
+    if (num<NUM_DRIVES)
+    {
+    	drv = &floppy[num];
+    	save_u32 (drv->drive_id);	    /* drive type ID */
+    	save_u8 ((drv->motoroff ? 0:1) | ((disabled & (1 << num)) ? 2 : 0));  /* state */
+    	save_u8 (drv->cyl);		    /* cylinder */
+    	save_u8 (drv->dskready);	    /* dskready */
+    	save_u8 (drv->drive_id_scnt);   /* id mode position */
+    	save_u32 (drv->mfmpos);	    /* disk position */
+    	save_u32 (0);		    /* CRC of disk image */
+    	strcpy ((char *)dst, prefs_df[num]);/* image name */
+    }
+    else
+    {
+	save_u32 (DRIVE_ID_NONE);	/* drive type ID */
+	save_u8 (((disabled & (1 << num)) ? 2 : 0)); /* state */
+	save_u8 (0);	/* cylinder */
+	save_u8 (0);	/* dskready */
+	save_u8 (0);	/* id mode position */
+	save_u32 (m68k_speed);	/* disk position */
+	save_u32 (0);	/* CRC of disk image */
+	dst[0]=dst[1]=0;
+    }
+
+    dst = (uae_u8 *)(((unsigned)dst)+strlen((char *)dst) + 1);
+    *len = dst - dstbak;
+    return dstbak;
+}
+
+/* internal floppy controller variables */
+
+uae_u8 *restore_floppy(uae_u8 *src)
+{
+    word = restore_u16();
+    bitoffset = restore_u8();
+    dma_enable = restore_u8();
+    disk_hpos = restore_u8();
+    dskdmaen = restore_u8();
+    word |= restore_u16() << 16;
+
+    return src;
+}
+
+uae_u8 *save_floppy(int *len)
+{
+    uae_u8 *dstbak, *dst;
+
+    /* flush dma buffer before saving */
+    dodmafetch();
+
+    dstbak = dst = (uae_u8 *)malloc(2+1+1+1+1+2);
+    save_u16 (word);		/* current fifo (low word) */
+    save_u8 (bitoffset);	/* dma bit offset */
+    save_u8 (dma_enable);	/* disk sync found */
+    save_u8 (disk_hpos);	/* next bit read position */
+    save_u8 (dskdmaen);		/* dma status */
+    save_u16 (word >> 16);	/* current fifo (high word) */
+
+    *len = dst - dstbak;
+    return dstbak;
+}

@@ -9,7 +9,7 @@
 #ifndef UAE_MEMORY_H
 #define UAE_MEMORY_H
 
-#ifdef WIN32
+#if defined(WIN32)||defined(DINGOO)
 #define bzero(BUF,SIZ) memset(BUF,0,SIZ)
 #endif
 

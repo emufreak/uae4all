@@ -1,4 +1,11 @@
-
-static char *menu_msg="                         Amiga emulator for Dreamcast by Chui.                    Release Candidate.                               GPL License.                                          ";
+static char *menu_msg="                         Amiga emulator "
+#ifdef DREAMCAST
+ "for Dreamcast "
+#else 
+#ifdef DINGOO
+ "for Dingoo "
+#endif
+#endif
+ "by Chui.                    Second release Candidate.                               GPL License.                                          ";
 
 #define MAX_SCROLL_MSG (-1500)
