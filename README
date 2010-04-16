@@ -6,7 +6,8 @@
 
 
 This is UAE4ALL GP2X Wiz port for Maemo 5 Platform (ie. Nokia N900).
-This released is based on the source code from Chui's Dreamcast UAE4ALL and notaz's UAE4ALL GP2x v0.8.0.
+This released is based on the source code from Chui's Dreamcast UAE4ALL
+and notaz's UAE4ALL GP2x v0.8.0.
 
 Homepage of UAE4All 0.8.0 Maemo Edition:
 - http://github.com/smokku/uae4all
@@ -30,6 +31,11 @@ GNU GPL. E-UAE is based on the work of dozens of contributors including
 Bernd Schmidt (the original author and maintainer of UAE), Bernie Meyer 
 (the author of the x86 JIT compiler), Toni Wilen (the current maintainer of 
 WinUAE), and many more.
+---------------------------------------------------------------------------
+UAE4ALL RC 2 (02/04/2010)                                              Chui
+
+Some new features for Dingoo
+like savestates and some better speed for sound.
 ---------------------------------------------------------------------------
 
 
