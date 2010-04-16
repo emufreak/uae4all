@@ -1,6 +1,10 @@
-uae4all (1rc1.20100402-1) fremantle; urgency=low
+uae4all (1rc2-1) fremantle; urgency=low
 
-  * Merged uae4all 20100402 source from Chui.
+  * Merged uae4all RC2 (20100402) source from Chui:
+    * savestates support
+    * better sound emulation performance
+    * keyboard joystick emulation
+  * Disabled SDL_DOUBLEBUFFER (it's not needed with scaler enabled)
 
  -- Tomasz Sterna <tomek@xiaoka.com>  Fri, 16 Apr 2010 12:18:29 +0200
 
