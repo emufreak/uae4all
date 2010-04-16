@@ -5,18 +5,18 @@
                                        M a e m o  E d i t i o n
 
 
-This is UAE4ALL GP2X Wiz port for Maemo 5 Platform (ie. Nokia N900).
-This released is based on the source code from Chui's Dreamcast UAE4ALL
-and notaz's UAE4ALL GP2x v0.8.0.
+This is UAE4ALL emulator port for Maemo 5 Platform (ie. Nokia N900).
+This released is based on the source code from Chui's UAE4ALL RC2
+and notaz's UAE4ALL GP2X v0.8.0.
 
-Homepage of UAE4All 0.8.0 Maemo Edition:
+Homepage of UAE4All Maemo Edition:
 - http://github.com/smokku/uae4all
 
 
 Chui's Dreamcast UAE4ALL:
 - http://chui.dcemu.co.uk/uae4all.html
 
-notaz's UAE4ALL GP2x:
+notaz's UAE4ALL GP2X:
 - http://notaz.gp2x.de/other.php#GP2X
 
 
@@ -37,6 +37,17 @@ UAE4ALL RC 2 (02/04/2010)                                              Chui
 Some new features for Dingoo
 like savestates and some better speed for sound.
 ---------------------------------------------------------------------------
+
+
+UAE4All Emulates Commodore Amiga 500 with additional 512kB RAM expansion.
+
+You need to put the "kick.rom" image in the MyDocs directory (MMC root).
+Make sure that you have the  correct kickstart image (524288 bytes).
+The original kickstart 1.3 works best.
+
+Compressed ADF images are supported. Either with gzip or 7zip.
+
+For more information see README.Dingoo.
 
 
 This is GPL'ed software... respect the license.
