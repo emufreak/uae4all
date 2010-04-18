@@ -1,3 +1,11 @@
+uae4all (1rc2-2) fremantle; urgency=low
+
+  * Updated graphics with RC2 resources.
+  * Fixed joystick emulation on Maemo.
+  * Extended keyboard emulation on Maemo.
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Sun, 18 Apr 2010 23:12:19 +0200
+
 uae4all (1rc2-1) fremantle; urgency=low
 
   * Merged uae4all RC2 (20100402) source from Chui:
