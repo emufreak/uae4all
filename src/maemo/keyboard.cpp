@@ -41,6 +41,7 @@ int decode_maemo (SDL_keysym *prKeySym)
     case SDLK_i: return AK_F8;
     case SDLK_o: return AK_F9;
     case SDLK_p: return AK_F10;
+    case SDLK_BACKSPACE: return AK_ESC;
     }
     }
 

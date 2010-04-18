@@ -72,10 +72,11 @@ Fire2      : Fn
 
 Mouse keymapping:
 Button1    : SPACE
-Button2    : Shift
+Button2    : SHIFT
 
 Keyboard mapping:
-1-0    : Fn + q-p
-F1-F10 : Fn + Ctrl + q-p
-Keypad : Fn + Shift + q-p,asfv.ENTER
+1-0    : Fn + Q-P
+F1-F10 : Fn + Ctrl + Q-P
+Escape : Fn + Ctrl + BACKSPACE
+Keypad : Fn + Shift + Q-P ASFV.ENTER
 
