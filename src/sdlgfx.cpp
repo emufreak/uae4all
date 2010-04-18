@@ -458,8 +458,11 @@ static int kc_decode (SDL_keysym *prKeySym)
     case SDLK_KP_MINUS: return AK_NPSUB;
     case SDLK_KP_PLUS: return AK_NPADD;
     case SDLK_KP_PERIOD: return AK_NPDEL;
+#ifdef MAEMO_CHANGES
+    case SDLK_KP_ENTER: return AK_RET;
+#else
     case SDLK_KP_ENTER: return AK_ENT;
-
+#endif
     case SDLK_F1: return AK_F1;
     case SDLK_F2: return AK_F2;
     case SDLK_F3: return AK_F3;
@@ -532,7 +535,13 @@ static int decode_us (SDL_keysym *prKeySym)
 
 int keycode2amiga(SDL_keysym *prKeySym)
 {
-    int iAmigaKeycode = kc_decode(prKeySym);
+    int iAmigaKeycode;
+#ifdef MAEMO_CHANGES
+#include "maemo/keyboard.h"
+    iAmigaKeycode = decode_maemo(prKeySym);
+    if (iAmigaKeycode == -1)
+#endif
+    iAmigaKeycode = kc_decode(prKeySym);
     if (iAmigaKeycode == -1)
             return decode_us(prKeySym);
     return iAmigaKeycode;
@@ -720,8 +729,25 @@ break;
 #endif
 #ifndef DREAMCAST
 	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP)
+#ifdef DINGOO
+		&&(rEvent.key.keysym.sym!=SDLK_ESCAPE)
+		&&(rEvent.key.keysym.sym!=SDLK_RETURN)
+		&&(rEvent.key.keysym.sym!=SDLK_TAB)
+		&&(rEvent.key.keysym.sym!=SDLK_BACKSPACE)
+#endif
 #ifdef EMULATED_JOYSTICK
-		&&(rEvent.key.keysym.sym!=SDLK_ESCAPE)&&((rEvent.key.keysym.sym!=SDLK_SPACE)||((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_LCTRL)&&((rEvent.key.keysym.sym!=SDLK_LALT)||((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_RETURN)&&((rEvent.key.keysym.sym!=SDLK_LSHIFT)||((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_TAB)&&(rEvent.key.keysym.sym!=SDLK_BACKSPACE)&&(rEvent.key.keysym.sym!=SDLK_UP)&&(rEvent.key.keysym.sym!=SDLK_DOWN)&&(rEvent.key.keysym.sym!=SDLK_LEFT)&&(rEvent.key.keysym.sym!=SDLK_RIGHT)
+		&&((rEvent.key.keysym.sym!=SDLK_SPACE)||((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode)))
+		&&((rEvent.key.keysym.sym!=SDLK_LSHIFT)||((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode)))
+		&&(rEvent.key.keysym.sym!=SDLK_LCTRL)
+#ifdef MAEMO_CHANGES
+		&&((rEvent.key.keysym.sym!=SDLK_MODE)||((rEvent.key.keysym.sym==SDLK_MODE)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))
+#else
+		&&((rEvent.key.keysym.sym!=SDLK_LALT)||((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))
+#endif
+		&&(rEvent.key.keysym.sym!=SDLK_UP)
+		&&(rEvent.key.keysym.sym!=SDLK_DOWN)
+		&&(rEvent.key.keysym.sym!=SDLK_LEFT)
+		&&(rEvent.key.keysym.sym!=SDLK_RIGHT)
 #endif
 			    )
 #endif
@@ -761,8 +787,25 @@ break;
 #endif
 #ifndef DREAMCAST
 	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP)
+#ifdef DINGOO
+		&&(rEvent.key.keysym.sym!=SDLK_ESCAPE)
+		&&(rEvent.key.keysym.sym!=SDLK_RETURN)
+		&&(rEvent.key.keysym.sym!=SDLK_TAB)
+		&&(rEvent.key.keysym.sym!=SDLK_BACKSPACE)
+#endif
 #ifdef EMULATED_JOYSTICK
-		&&(rEvent.key.keysym.sym!=SDLK_ESCAPE)&&((rEvent.key.keysym.sym!=SDLK_SPACE)||((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_LCTRL)&&((rEvent.key.keysym.sym!=SDLK_LALT)||((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_RETURN)&&((rEvent.key.keysym.sym!=SDLK_LSHIFT)||((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_TAB)&&(rEvent.key.keysym.sym!=SDLK_BACKSPACE)&&(rEvent.key.keysym.sym!=SDLK_UP)&&(rEvent.key.keysym.sym!=SDLK_DOWN)&&(rEvent.key.keysym.sym!=SDLK_LEFT)&&(rEvent.key.keysym.sym!=SDLK_RIGHT)
+		&&((rEvent.key.keysym.sym!=SDLK_SPACE)||((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode)))
+		&&((rEvent.key.keysym.sym!=SDLK_LSHIFT)||((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode)))
+		&&(rEvent.key.keysym.sym!=SDLK_LCTRL)
+#ifdef MAEMO_CHANGES
+		&&((rEvent.key.keysym.sym!=SDLK_MODE)||((rEvent.key.keysym.sym==SDLK_MODE)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))
+#else
+		&&((rEvent.key.keysym.sym!=SDLK_LALT)||((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))
+#endif
+		&&(rEvent.key.keysym.sym!=SDLK_UP)
+		&&(rEvent.key.keysym.sym!=SDLK_DOWN)
+		&&(rEvent.key.keysym.sym!=SDLK_LEFT)
+		&&(rEvent.key.keysym.sym!=SDLK_RIGHT)
 #endif
 			    )
 #endif
@@ -783,6 +826,7 @@ break;
 		}
 	    }
 	    break;
+#ifndef MAEMO_CHANGES
 	case SDL_MOUSEBUTTONDOWN:
 #ifdef DEBUG_EVENTS
 	    dbg("Event: mouse button down");
@@ -826,6 +870,7 @@ break;
 	    	buttonstate[(rEvent.button.button-1)%3] = 0;
 #endif
 	    break;
+#endif // MAEMO_CHANGES
 	case SDL_MOUSEMOTION:
 #ifdef DEBUG_EVENTS
 	    dbg("Event: mouse motion");

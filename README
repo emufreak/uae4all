@@ -66,6 +66,16 @@ R      : 1, TAB
 L      : 2, BACKSPACE
 
 Joystick1 keymapping:
-Directions : Arrow Keys, A D W S
-Fire       : SPACE
+Directions : Arrow Keys
+Fire1      : Ctrl
+Fire2      : Fn
+
+Mouse keymapping:
+Button1    : SPACE
+Button2    : Shift
+
+Keyboard mapping:
+1-0    : Fn + q-p
+F1-F10 : Fn + Ctrl + q-p
+Keypad : Fn + Shift + q-p,asfv.ENTER
 

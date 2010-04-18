@@ -489,6 +489,7 @@ void gui_handle_events (void)
 		}
 	}
 	else
+#endif
 #ifdef EMULATED_JOYSTICK
 	if (emulated_mouse)
 	{
@@ -523,10 +524,13 @@ void gui_handle_events (void)
 		emulated_bot=keystate[SDLK_DOWN];
 	}
 	emulated_button1=keystate[SDLK_LCTRL];
+#ifdef MAEMO_CHANGES
+	emulated_button2=keystate[SDLK_MODE];
+#else
 	emulated_button2=keystate[SDLK_LALT];
+#endif
 	emulated_mouse_button1=keystate[SDLK_SPACE];
 	emulated_mouse_button2=keystate[SDLK_LSHIFT];
-#endif
 #endif
 #ifndef DINGOO
 	if ( keystate[SDLK_PAGEUP] )
