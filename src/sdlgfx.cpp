@@ -49,7 +49,6 @@ extern int __sdl_dc_emulate_mouse;
 
 #ifdef MAEMO_CHANGES
 #include "maemo/sdlvscalers.h"
-#include "maemo/joystick.h"
 #endif
 
 #include "debug_uae4all.h"
