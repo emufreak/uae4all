@@ -1285,13 +1285,17 @@ void m68k_go (int may_quit)
 
     in_m68k_go++;
     for (;;) {
+#ifdef DEBUG_SAVESTATE
 printf("m68k_go state=%X, flags=%X, PC=%X\n",savestate_state,_68k_spcflags,_68k_getpc());fflush(stdout);
+#endif
 	if (quit_program > 0) {
 	    if (quit_program == 1)
 		break;
 	    quit_program = 0;
 	    if (savestate_state == STATE_RESTORE) {
+#ifdef DEBUG_SAVESTATE
 puts("Restaurando");fflush(stdout);
+#endif
 		    restore_state (savestate_filename);
 	    }
 	    m68k_reset ();
