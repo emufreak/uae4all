@@ -81,10 +81,15 @@ void read_joystick(int nr, unsigned int *dir, int *button)
 	top|=emulated_top;
 	bot|=emulated_bot;
 	*button |= emulated_button1;
+#ifdef DINGOO
 	if ((vkbd_button2==(SDLKey)0)&&(!vkbd_mode))
 		top|=emulated_button2;
-    }
 #endif
+#ifdef MAEMO_CHANGES
+	*button |= (emulated_button2 & 1) << 1;
+#endif
+#endif
+    }
 #else
     int hat=15^(SDL_JoystickGetHat(joy,0));
     if (hat & SDL_HAT_LEFT)
