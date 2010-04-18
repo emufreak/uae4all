@@ -444,7 +444,7 @@ void gui_handle_events (void)
 #ifndef DREAMCAST
 	Uint8 *keystate = SDL_GetKeyState(NULL);
 
-#if defined(EMULATED_JOYSTICK) && !defined(MAEMO_CHANGES)
+#ifdef DINGOO
 	if (keystate[SDLK_ESCAPE])
 	{
 		if (keystate[SDLK_LCTRL])
@@ -489,6 +489,7 @@ void gui_handle_events (void)
 		}
 	}
 	else
+#ifdef EMULATED_JOYSTICK
 	if (emulated_mouse)
 	{
 		if (keystate[SDLK_LEFT])
@@ -526,7 +527,8 @@ void gui_handle_events (void)
 	emulated_mouse_button1=keystate[SDLK_SPACE];
 	emulated_mouse_button2=keystate[SDLK_LSHIFT];
 #endif
-#ifndef EMULATED_JOYSTICK
+#endif
+#ifndef DINGOO
 	if ( keystate[SDLK_PAGEUP] )
 		goSuperThrottle();
 	else
@@ -544,7 +546,7 @@ void gui_handle_events (void)
 	else
 #endif
 	if (( keystate[SDLK_F11] )
-#ifdef EMULATED_JOYSTICK
+#ifdef DINGOO
 			||((keystate[SDLK_RETURN])&&(keystate[SDLK_ESCAPE]))
 #endif
 	   )
@@ -553,12 +555,12 @@ void gui_handle_events (void)
 	if (SDL_JoystickGetButton(uae4all_joy0,3) || SDL_JoystickGetButton(uae4all_joy1,3) )
 #endif
 	{
-#ifdef EMULATED_JOYSTICK
+#ifdef DINGOO
 		keystate[SDLK_RETURN]=keystate[SDLK_ESCAPE]=keystate[SDLK_TAB]=keystate[SDLK_BACKSPACE]=0;
 #endif
 		goMenu();
 	}
-#ifdef EMULATED_JOYSTICK
+#ifdef DINGOO
 	if (keystate[SDLK_RETURN])
 	{
 		if (goingSuperThrottle<3)
