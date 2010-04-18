@@ -173,6 +173,15 @@ static int getFiles(char *dir)
 			i--;
 			continue;
 		}
+		if (strlen(actual->d_name)>3)
+		{
+			char *final=(char *)&actual->d_name[strlen(actual->d_name)-3];
+			if ((!strcmp(final,"asf"))||(!strcmp(final,"ASF"))||(!strcmp(final,"ads"))||(!strcmp(final,"ADS")))
+			{
+				i--;
+				continue;
+			}
+		}
 		memset(text_dir_files[i].d_name,0,MAX_FILELEN+1);
 		strncpy(text_dir_files[i].d_name,actual->d_name,MAX_FILELEN);
 		if (strlen(text_dir_files[i].d_name)==MAX_FILELEN)
@@ -327,10 +336,14 @@ static int key_loadMenu(int *c)
 				case SDLK_a:
 				case SDLK_LEFT: left=1; break;
 				case SDLK_w:
+#ifdef MAEMO_CHANGES
 				case SDLK_PRINT:  /* UP on Maemo SDK SIC! */
+#endif
 				case SDLK_UP: up=1; break;
 				case SDLK_s:
+#ifdef MAEMO_CHANGES
 				case SDLK_RSUPER: /* DOWN on Maemo SDK SIC! */
+#endif
 				case SDLK_DOWN: down=1; break;
 				case SDLK_x:
 				case SDLK_SPACE:
@@ -344,12 +357,20 @@ static int key_loadMenu(int *c)
 				case SDLK_q:
 				case SDLK_LALT: hit1=1; break;
 				case SDLK_1:
+#ifdef DREAMCAST
 				case SDLK_TAB:
+#else
+				case SDLK_BACKSPACE:
+#endif
 						if (text_dir_num_files)
 							text_dir_num_files_index=text_dir_num_files-1;
 						break;
 				case SDLK_2:
+#ifdef DREAMCAST
 				case SDLK_BACKSPACE:
+#else
+				case SDLK_TAB:
+#endif
 						text_dir_num_files_index=0;
 						break;
 

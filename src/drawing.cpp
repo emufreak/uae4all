@@ -47,6 +47,7 @@
 #include "autoconf.h"
 #include "gui.h"
 #include "drawing.h"
+#include "savestate.h"
 #include "maemo/sdlvscalers.h"
 #include "sound.h"
 #include "debug_uae4all.h"
@@ -57,6 +58,8 @@
 #define _INLINE_ 
 #endif
 
+
+#define maxhpos MAXHPOS
 
 /* The shift factor to apply when converting between Amiga coordinates and window
    coordinates.  Zero if the resolution is the same, positive if window coordinates
@@ -155,7 +158,8 @@ int inhibit_frame;
 int framecnt = 0;
 static int frame_redraw_necessary;
 
-#ifdef NO_THREADS
+#if defined(NO_THREADS) && defined(DREAMCAST)
+// SOLO PARA DREAMCAST PORQUE TIENE UN SOUNDBUFFER DE 960
 #define UMBRAL 21
 #else
 #define UMBRAL 20
@@ -184,6 +188,7 @@ static __inline__ void count_frame (void)
 #ifdef AUTO_PROFILER
     if (uae4all_numframes==AUTO_PROFILER)
     {
+	    puts("PROFILER..."); fflush(stdout);
 	    prefs_gfx_framerate=0;
 #ifdef AUTO_PROFILER_SOUND
 	    changed_produce_sound=2;
@@ -1699,7 +1704,7 @@ static __inline__ void do_flush_screen (int start, int stop)
     if (scaler)
 	scaler->finish();
 
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(DINGOO)
     unlockscr ();
 #endif
 }
@@ -1981,7 +1986,7 @@ static _INLINE_ void finish_drawing_frame (void)
 {
     int i;
 
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(DINGOO)
     if (! lockscr ()) {
 	notice_screen_contents_lost ();
 	return;
@@ -2045,6 +2050,24 @@ void vsync_handle_redraw (int long_frame, int lof_changed)
 	 * can do some things which would cause confusion if they were
 	 * done at other times.
 	 */
+
+	if (savestate_state == STATE_DOSAVE)
+	{
+		custom_prepare_savestate ();
+		savestate_state = STATE_SAVE;
+		pause_sound();
+		save_state (savestate_filename, "Description!");
+		resume_sound();
+    		gui_set_message("Saved", 50);
+		savestate_state = 0;
+	}
+	else
+		if (savestate_state == STATE_DORESTORE)
+		{
+			pause_sound();
+			savestate_state = STATE_RESTORE;
+		        uae_reset ();
+		}
 
 	if (quit_program < 0) {
 	    quit_program = -quit_program;

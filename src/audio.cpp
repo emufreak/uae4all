@@ -25,6 +25,7 @@
 #include "m68k/m68k_intrf.h"
 #include "debug_uae4all.h"
 #include "autoconf.h"
+#include "savestate.h"
 #include "gensound.h"
 #include "sound.h"
 #include "events.h"
@@ -37,12 +38,12 @@
 #define AUDIO_PREFETCH(ADR)
 #endif
 
-struct audio_channel_data audio_channel[6] UAE4ALL_ALIGN;
-int audio_channel_current_sample[6] UAE4ALL_ALIGN;
-int audio_channel_vol[6] UAE4ALL_ALIGN;
-unsigned long audio_channel_adk_mask[6] UAE4ALL_ALIGN;
-int audio_channel_state[6] UAE4ALL_ALIGN;
-unsigned long audio_channel_evtime[6] UAE4ALL_ALIGN;
+static struct audio_channel_data audio_channel[6] UAE4ALL_ALIGN;
+static int audio_channel_current_sample[6] UAE4ALL_ALIGN;
+static int audio_channel_vol[6] UAE4ALL_ALIGN;
+static unsigned long audio_channel_adk_mask[6] UAE4ALL_ALIGN;
+static int audio_channel_state[6] UAE4ALL_ALIGN;
+static unsigned long audio_channel_evtime[6] UAE4ALL_ALIGN;
 
 #ifdef NO_SOUND
 int sound_available = 0;
@@ -50,21 +51,20 @@ int sound_available = 0;
 int sound_available = 1;
 #endif
 
-/* Zero if we want to produce Paula output, nonzero if we want to produce
-   AHI output.  */
-int sound_ahi_enabled;
-
-/* Bit 0 is set if the right channel raised an interrupt, bit 1 is set if the
-   left channel raised an interrupt.  */
-static int ahi_interrupt_state;
-
 unsigned long sample_evtime, scaled_sample_evtime;
 int scaled_sample_evtime_ok;
 
 static unsigned long last_cycles;
-unsigned long next_sample_evtime;
+static unsigned long next_sample_evtime;
 
 typedef uae_s8 sample8_t;
+
+#ifdef EXACT_AUDIO
+#define APROX_VOL(VAL) VAL
+#else
+static const int aprox_vol[128]= {-16, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 };
+#define APROX_VOL(VAL) aprox_vol[(VAL)&0x7f]
+#endif
 
 #define PUT_SOUND_WORD(b) \
 { \
@@ -90,6 +90,7 @@ typedef uae_s8 sample8_t;
 	} \
 
 
+#ifdef EXACT_AUDIO
 #define SAMPLE_HANDLER \
 	{ \
 		AUDIO_PREFETCH(audio_channel_vol[0]); \
@@ -108,8 +109,28 @@ typedef uae_s8 sample8_t;
 		d3 &= audio_channel_adk_mask[3]; \
 	    	PUT_SOUND_WORD (d0+d1+d2+d3) \
     		CHECK_SOUND_BUFFERS(); \
-	} \
-
+	}
+#else
+#define SAMPLE_HANDLER \
+	{ \
+		AUDIO_PREFETCH(audio_channel_vol[0]); \
+		register uae_u32 d0 = audio_channel_current_sample[0]; \
+		register uae_u32 d1 = audio_channel_current_sample[1]; \
+		register uae_u32 d2 = audio_channel_current_sample[2]; \
+		register uae_u32 d3 = audio_channel_current_sample[3]; \
+		AUDIO_PREFETCH(audio_channel_adk_mask[0]); \
+		d0 <<= audio_channel_vol[0]; \
+		d1 <<= audio_channel_vol[1]; \
+		d2 <<= audio_channel_vol[2]; \
+		d3 <<= audio_channel_vol[3]; \
+		d0 &= audio_channel_adk_mask[0]; \
+		d1 &= audio_channel_adk_mask[1]; \
+		d2 &= audio_channel_adk_mask[2]; \
+		d3 &= audio_channel_adk_mask[3]; \
+	    	PUT_SOUND_WORD (d0+d1+d2+d3) \
+    		CHECK_SOUND_BUFFERS(); \
+	}
+#endif
 
 #define SCHEDULE_AUDIO(CHN) \
 	if (audio_channel_state[CHN]) { \
@@ -130,8 +151,10 @@ void schedule_audio (void)
     SCHEDULE_AUDIO(1)
     SCHEDULE_AUDIO(2)
     SCHEDULE_AUDIO(3)
+#ifdef SOUND_AHI
     SCHEDULE_AUDIO(4)
     SCHEDULE_AUDIO(5)
+#endif
     eventtab[ev_audio].evtime = get_cycles () + best;
 #else
     unsigned long best = ~0ul;
@@ -139,8 +162,11 @@ void schedule_audio (void)
 
     eventtab[ev_audio].active = 0;
     eventtab[ev_audio].oldcycles = get_cycles ();
+#ifdef SOUND_AHI
     for (i = 0; i < 6; i++) {
-	struct audio_channel_data *cdp;
+#else
+    for (i = 0; i < 4; i++) {
+#endif
     	SCHEDULE_AUDIO(i)
     }
     eventtab[ev_audio].evtime = get_cycles () + best;
@@ -151,7 +177,7 @@ void schedule_audio (void)
 
 #define AUDIO_HANDLER_CASE_1(NR) \
 	struct audio_channel_data *cdp = &audio_channel[NR]; \
-	audio_channel_evtime[NR] = maxhpos * CYCLE_UNIT; \
+	audio_channel_evtime[NR] = MAXHPOS * CYCLE_UNIT; \
 	audio_channel_state[NR] = 5; \
 	INTREQ(0x8000 | (0x80 << NR)); \
 	if (cdp->wlen != 1) \
@@ -204,8 +230,8 @@ void schedule_audio (void)
 		cdp->data_written = 2; \
 	    if (cdp->dat == 0) \
 	       (cdp+1)->per = PERIOD_MAX; \
-	    else if (cdp->dat < maxhpos * CYCLE_UNIT / 2) \
-	       (cdp+1)->per = maxhpos * CYCLE_UNIT / 2; \
+	    else if (cdp->dat < MAXHPOS * CYCLE_UNIT / 2) \
+	       (cdp+1)->per = MAXHPOS * CYCLE_UNIT / 2; \
 	    else \
 	       (cdp+1)->per = cdp->dat * CYCLE_UNIT; \
 	}
@@ -255,7 +281,7 @@ void schedule_audio (void)
 	    if (cdp->dmaen && napnav) \
 		cdp->data_written = 2; \
 	    if (audav) { \
-		    audio_channel_vol[NR+1]= cdp->dat; \
+		    audio_channel_vol[NR+1]= APROX_VOL(cdp->dat); \
 	    } \
 	} 
 
@@ -325,7 +351,7 @@ static __inline__ void audio_handler (int nr)
 	write_log ("Bug in sound code\n");
 	break;
      case 1:
-	audio_channel_evtime[nr] = maxhpos * CYCLE_UNIT;
+	audio_channel_evtime[nr] = MAXHPOS * CYCLE_UNIT;
 	audio_channel_state[nr] = 5;
 	INTREQ(0x8000 | (0x80 << nr));
 	if (cdp->wlen != 1)
@@ -362,8 +388,8 @@ static __inline__ void audio_handler (int nr)
 	    if (nr < 3) {
 		if (cdp->dat == 0)
 		    (cdp+1)->per = PERIOD_MAX;
-		else if (cdp->dat < maxhpos * CYCLE_UNIT / 2)
-		    (cdp+1)->per = maxhpos * CYCLE_UNIT / 2;
+		else if (cdp->dat < MAXHPOS * CYCLE_UNIT / 2)
+		    (cdp+1)->per = MAXHPOS * CYCLE_UNIT / 2;
 		else
 		    (cdp+1)->per = cdp->dat * CYCLE_UNIT;
 	    }
@@ -392,7 +418,7 @@ static __inline__ void audio_handler (int nr)
 		cdp->data_written = 2;
 	    if (audav) {
 		if (nr < 3) {
-		    audio_channel_vol[nr+1] = cdp->dat;
+		    audio_channel_vol[nr+1] = APROX_VOL(cdp->dat);
 		}
 	    }
 	}
@@ -406,6 +432,7 @@ static __inline__ void audio_handler (int nr)
 #endif
 
 
+#ifdef SOUND_AHI
 #ifdef UNROLL_AHI_HANDLER
 
 #define AHI_HANDLER_CASE_1(NR) \
@@ -512,23 +539,26 @@ static __inline__ void ahi_handler (int nr)
 }
 
 #endif
+#endif
 
 
-void aud0_handler(void) {
+/*
+static void aud0_handler(void) {
 	audio_handler_0();
 }
 
-void aud1_handler(void) {
+static void aud1_handler(void) {
 	audio_handler_1();
 }
 
-void aud2_handler (void) {
+static void aud2_handler (void) {
 	audio_handler_2();
 }
 
-void aud3_handler (void) {
+static void aud3_handler (void) {
 	audio_handler_3();
 }
+*/
 
 
 #define audio_channel_enable_dma_1(NCHAN) \
@@ -537,17 +567,19 @@ void aud3_handler (void) {
     if (audio_channel_state[NCHAN] == 0) { \
 	audio_channel_state[NCHAN] = 1; \
 	cdp->pt = cdp->lc; \
-	cdp->wper = cdp->per; \
+	/* cdp->wper = cdp->per; */ \
 	cdp->wlen = cdp->len; \
 	cdp->data_written = 2; \
 	audio_channel_evtime[NCHAN] = eventtab[ev_hsync].evtime - get_cycles (); \
     } \
 }
 
-void audio_channel_enable_dma(int n_channel)
+/*
+static void audio_channel_enable_dma(int n_channel)
 {
 	audio_channel_enable_dma_1(n_channel)
 }
+*/
 
 #define audio_channel_disable_dma_1(NCHAN) \
 { \
@@ -559,13 +591,28 @@ void audio_channel_enable_dma(int n_channel)
     } \
 }
 
+/*
 void audio_channel_disable_dma(int n_channel)
 {
 	audio_channel_disable_dma_1(n_channel)
 }
+*/
 
 void audio_reset (void)
 {
+    int i;
+
+    if (savestate_state != STATE_RESTORE)
+    {
+	memset (audio_channel, 0, 4 * sizeof *audio_channel);
+	audio_channel[0].per = PERIOD_MAX;
+	audio_channel[1].per = PERIOD_MAX;
+	audio_channel[2].per = PERIOD_MAX;
+	audio_channel[3].per = PERIOD_MAX;
+    }
+    else
+	    for (i = 0; i < 4; i++)
+		    audio_channel[i].dmaen = (dmacon & 0x200) && (dmacon & (1 << i));
     memset (audio_channel, 0, 4 * sizeof *audio_channel);
     audio_channel[0].per = PERIOD_MAX;
     audio_channel[1].per = PERIOD_MAX;
@@ -577,8 +624,6 @@ void audio_reset (void)
     audio_channel[5].per = PERIOD_MAX;
 
     last_cycles = 0;
-    sound_ahi_enabled = 0;
-    ahi_interrupt_state = 0;
     next_sample_evtime = scaled_sample_evtime;
 
     schedule_audio ();
@@ -635,7 +680,7 @@ void check_prefs_changed_audio (void)
 	register unsigned long int best_evtime = n_cycles + 1; \
 
 
-#define CHECK_STATE \
+#define CHECK_STATE_PRE \
 	if (STATE0 && best_evtime > EVTIME0) \
 	    best_evtime = EVTIME0; \
 	if (STATE1 && best_evtime > EVTIME1) \
@@ -643,17 +688,32 @@ void check_prefs_changed_audio (void)
 	if (STATE2 && best_evtime > EVTIME2) \
 	    best_evtime = EVTIME2; \
 	if (STATE3 && best_evtime > EVTIME3) \
-	    best_evtime = EVTIME3; \
+	    best_evtime = EVTIME3; 
+
+#define CHECK_STATE_AHI \
 	if (STATE4 && best_evtime > EVTIME4) \
 	    best_evtime = EVTIME4; \
 	if (STATE5 && best_evtime > EVTIME5) \
-	    best_evtime = EVTIME5; \
+	    best_evtime = EVTIME5;
+
+#define CHECK_STATE_POST \
 	if (best_evtime > next_sample_evtime) \
 	    best_evtime = next_sample_evtime; \
 	if (best_evtime > n_cycles) \
-	    break; \
+	    break;
 
+#ifdef SOUND_AHI
+#define CHECK_STATE \
+	CHECK_STATE_PRE \
+	CHECK_STATE_AHI \
+	CHECK_STATE_POST
+#else
+#define CHECK_STATE \
+	CHECK_STATE_PRE \
+	CHECK_STATE_POST
+#endif
 
+#ifdef SOUND_AHI
 #define SUB_EVTIME \
 	next_sample_evtime -= best_evtime; \
 	EVTIME0 -= best_evtime; \
@@ -662,7 +722,16 @@ void check_prefs_changed_audio (void)
 	EVTIME3 -= best_evtime; \
 	EVTIME4 -= best_evtime; \
 	EVTIME5 -= best_evtime; \
-	n_cycles -= best_evtime; \
+	n_cycles -= best_evtime; 
+#else
+#define SUB_EVTIME \
+	next_sample_evtime -= best_evtime; \
+	EVTIME0 -= best_evtime; \
+	EVTIME1 -= best_evtime; \
+	EVTIME2 -= best_evtime; \
+	EVTIME3 -= best_evtime; \
+	n_cycles -= best_evtime; 
+#endif
 
 
 #define IF_SAMPLE \
@@ -688,6 +757,10 @@ void check_prefs_changed_audio (void)
 	    audio_handler_2(); \
 	if (!EVTIME3 && STATE3) \
 	    audio_handler_3(); \
+
+
+#define RUN_HANDLERS_AHI \
+	RUN_HANDLERS \
 	if (!EVTIME4 && STATE4) \
 	    ahi_handler_4(); \
 	if (!EVTIME5 && STATE5) \
@@ -700,15 +773,15 @@ void update_audio (void)
 
     uae4all_prof_start(4);
     n_cycles = get_cycles () - last_cycles;
-    if (sound_ahi_enabled)
+#ifdef SOUND_AHI
 	for (;;) {
 		DEFINE_STATE
 		CHECK_STATE
 		SUB_EVTIME
 		IF_SAMPLE_AHI
-		RUN_HANDLERS
+		RUN_HANDLERS_AHI
 	}
-    else
+#else 
 	for (;;) {
 		DEFINE_STATE
 		CHECK_STATE
@@ -716,6 +789,7 @@ void update_audio (void)
 		IF_SAMPLE
 		RUN_HANDLERS
 	}
+#endif
 
 	last_cycles = get_cycles () - n_cycles;
 
@@ -737,8 +811,10 @@ void AUDxDAT (int nr, uae_u16 v)
 {
     struct audio_channel_data *cdp = audio_channel + nr;
 
+#ifdef EXACT_AUDIO
     if (produce_sound)
     	update_audio ();
+#endif
 
     cdp->dat = v;
     if (audio_channel_state[nr] == 0 && !(INTREQR() & (0x80 << nr))) {
@@ -753,16 +829,20 @@ void AUDxDAT (int nr, uae_u16 v)
 
 void AUDxLCH (int nr, uae_u16 v)
 {
+#ifdef EXACT_AUDIO
     if (produce_sound)
     	update_audio ();
+#endif
 
     audio_channel[nr].lc = (audio_channel[nr].lc & 0xffff) | ((uae_u32)v << 16);
 }
 
 void AUDxLCL (int nr, uae_u16 v)
 {
+#ifdef EXACT_AUDIO
     if (produce_sound)
     	update_audio ();
+#endif
 
     audio_channel[nr].lc = (audio_channel[nr].lc & ~0xffff) | (v & 0xFFFE);
 }
@@ -771,14 +851,16 @@ void AUDxPER (int nr, uae_u16 v)
 {
     unsigned long per = v * CYCLE_UNIT;
 
+#ifdef EXACT_AUDIO
     if (produce_sound)
     	update_audio ();
+#endif
 
     if (per == 0)
 	per = PERIOD_MAX;
 
-    if (per < maxhpos * CYCLE_UNIT / 2)
-	per = maxhpos * CYCLE_UNIT / 2;
+    if (per < MAXHPOS * CYCLE_UNIT / 2)
+	per = MAXHPOS * CYCLE_UNIT / 2;
 
     if (audio_channel[nr].per == PERIOD_MAX
 	&& per != PERIOD_MAX)
@@ -794,19 +876,25 @@ void AUDxPER (int nr, uae_u16 v)
 
 void AUDxLEN (int nr, uae_u16 v)
 {
+#ifdef EXACT_AUDIO
     if (produce_sound)
     	update_audio ();
+#endif
     audio_channel[nr].len = v;
 }
 
 void AUDxVOL (int nr, uae_u16 v)
 {
+#ifdef EXACT_AUDIO
     int v2 = v & 64 ? 63 : v & 63;
 
     if (produce_sound)
     	update_audio ();
 
     audio_channel_vol[nr] = v2;
+#else
+    audio_channel_vol[nr] = APROX_VOL(v);
+#endif
 }
 
 int init_audio (void)
@@ -910,3 +998,54 @@ void update_adkmasks (void)
     audio_channel_adk_mask[3] = (((t >> 3) & 1) - 1);
 }
 
+
+uae_u8 *restore_audio (uae_u8 *src, int i)
+{
+    struct audio_channel_data *acd;
+    uae_u16 p,backper;
+
+    acd = audio_channel + i;
+    audio_channel_state[i]=restore_u8 ();
+    audio_channel_vol[i]=restore_u8 ();
+    acd->intreq2 = restore_u8 ();
+    acd->data_written = restore_u8 ();
+    acd->len = restore_u16 ();
+    acd->wlen = restore_u16 ();
+    backper = restore_u16 ();
+    p = restore_u16 ();
+    acd->wper = p ? p * CYCLE_UNIT : PERIOD_MAX;
+    acd->lc = restore_u32 ();
+    acd->pt = restore_u32 ();
+    audio_channel_evtime[i] = restore_u32 ();
+    AUDxPER(i,backper ? backper * CYCLE_UNIT : PERIOD_MAX);
+    audio_channel[i].dmaen = (dmacon & 0x200) && (dmacon & (1 << i));
+    AUDxDAT(i,0);
+
+    return src;
+}
+
+
+uae_u8 *save_audio (int *len, int i)
+{
+    struct audio_channel_data *acd;
+    uae_u8 *dst = (uae_u8 *)malloc (100);
+    uae_u8 *dstbak = dst;
+    uae_u16 p;
+
+    acd = audio_channel + i;
+    save_u8 (audio_channel_state[i]);
+    save_u8 (audio_channel_vol[i]);
+    save_u8 (acd->intreq2);
+    save_u8 (acd->data_written);
+    save_u16 (acd->len);
+    save_u16 (acd->wlen);
+    p = acd->per == PERIOD_MAX ? 0 : acd->per / CYCLE_UNIT;
+    save_u16 (p);
+    p = acd->per == PERIOD_MAX ? 0 : acd->wper / CYCLE_UNIT;
+    save_u16 (p);
+    save_u32 (acd->lc);
+    save_u32 (acd->pt);
+    save_u32 (audio_channel_evtime[i]);
+    *len = dst - dstbak;
+    return dstbak;
+}

@@ -35,7 +35,7 @@ struct joy_range
 
 void read_joystick(int nr, unsigned int *dir, int *button)
 {
-#ifndef MAX_AUTOEVENTS
+#if !defined(MAX_AUTOEVENTS) && !defined(AUTOEVENTS)
     int x_axis, y_axis;
     int left = 0, right = 0, top = 0, bot = 0;
     int len, i, num;
@@ -72,9 +72,19 @@ void read_joystick(int nr, unsigned int *dir, int *button)
 	num = 16;
     for (i = 0; i < num; i++)
 	*button |= (SDL_JoystickGetButton (joy, i) & 1) << i;
-    if (left) top = !top;
-    if (right) bot = !bot;
-    *dir = bot | (right << 1) | (top << 8) | (left << 9);
+#ifdef EMULATED_JOYSTICK
+    extern int emulated_left, emulated_right, emulated_top, emulated_bot, emulated_button1, emulated_button2, emulated_mouse_button1, emulated_mouse_button2;
+    if (nr)
+    {
+	left|=emulated_left;
+	right|=emulated_right;
+	top|=emulated_top;
+	bot|=emulated_bot;
+	*button |= emulated_button1;
+	if ((vkbd_button2==(SDLKey)0)&&(!vkbd_mode))
+		top|=emulated_button2;
+    }
+#endif
 #else
     int hat=15^(SDL_JoystickGetHat(joy,0));
     if (hat & SDL_HAT_LEFT)
@@ -88,6 +98,7 @@ void read_joystick(int nr, unsigned int *dir, int *button)
     if (vkbd_button2==(SDLKey)0)
     	top |= SDL_JoystickGetButton(joy,6) & 1;
     *button = SDL_JoystickGetButton(joy,2) & 1;
+#endif
     
     if(vkbd_mode && nr)
     {
@@ -111,13 +122,33 @@ void read_joystick(int nr, unsigned int *dir, int *button)
 		else
 			vkbd_move &= ~VKBD_DOWN;
 	}
-	if (*button)
+	if ((*button)&1)
 	{
 		vkbd_move=VKBD_BUTTON;
 		*button=0;
 	}
+#if defined(EMULATED_JOYSTICK) || defined(DREAMCAST)
+#ifndef DREAMCAST
+	else if (emulated_button2)
+#else
 	else if (SDL_JoystickGetButton(joy,6)&1)
+#endif
 		vkbd_move=VKBD_BUTTON2;
+#ifndef DREAMCAST
+	else if (emulated_mouse_button1)
+#else
+#error NO IMPLEMENTADO TODAVIA
+	else if (SDL_JoystickGetButton(joy,6)&1)
+#endif
+		vkbd_move=VKBD_BUTTON3;
+#ifndef DREAMCAST
+	else if (emulated_mouse_button2)
+#else
+#error NO IMPLEMENTADO TODAVIA
+	else if (SDL_JoystickGetButton(joy,6)&1)
+#endif
+		vkbd_move=VKBD_BUTTON4;
+#endif
     }
     else
     {
@@ -125,20 +156,6 @@ void read_joystick(int nr, unsigned int *dir, int *button)
     	if (right) bot = !bot;
     	*dir = bot | (right << 1) | (top << 8) | (left << 9);
     }
-#endif
-#endif
-#ifdef MAEMO_CHANGES
-#include "maemo/joystick.h"
-	if (nr == 0)
-	{
-		*dir |= fake_joy0dir;
-		*button |= fake_joy0button;
-	}
-	else if (nr == 1)
-	{
-		*dir |= fake_joy1dir;
-		*button |= fake_joy1button;
-	}
 #endif
 }
 

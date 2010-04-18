@@ -19,12 +19,12 @@
 
 
 #ifdef USE_FAME_CORE
-#ifdef DREAMCAST
+#if defined(DREAMCAST) || defined(USE_FAME_CORE_C)
 #define IO_CYCLE io_cycle_counter
 #else
 #define IO_CYCLE __io_cycle_counter
 #endif
-extern unsigned IO_CYCLE;
+extern signed int IO_CYCLE;
 #endif
 
 #include "sysconfig.h"
@@ -56,6 +56,7 @@ extern unsigned IO_CYCLE;
 #include "autoconf.h"
 #include "gui.h"
 #include "drawing.h"
+#include "savestate.h"
 
 
 #ifdef STOP_WHEN_COPPER
@@ -145,7 +146,8 @@ uae_u16 adkcon; /* used by audio code */
 
 static uae_u32 cop1lc,cop2lc,copcon;
  
-int maxhpos = MAXHPOS_PAL;
+//int maxhpos = MAXHPOS_PAL;
+#define maxhpos MAXHPOS
 int maxvpos = MAXVPOS_PAL;
 int minfirstline = MINFIRSTLINE_PAL;
 int vblank_endline = VBLANK_ENDLINE_PAL;
@@ -368,7 +370,14 @@ static __inline__ void setclr (uae_u16 *_GCCRES_ p, uae_u16 val)
 	*p &= ~val;
 }
 
+#ifdef EXACT_CURRENT_HPOS
 #define current_hpos() ((get_cycles () - eventtab[ev_hsync].oldcycles) / CYCLE_UNIT)
+#define update_current_hpos()
+#else
+static unsigned _current_hpos_=0;
+#define current_hpos() _current_hpos_
+#define update_current_hpos() _current_hpos_=((get_cycles () - eventtab[ev_hsync].oldcycles) / CYCLE_UNIT)
+#endif
 
 
 static __inline__ uae_u8 *_GCCRES_ pfield_xlateptr (uaecptr plpt, int bytecount)
@@ -1511,13 +1520,13 @@ static _INLINE_ void init_hz (void)
     isntsc = beamcon0 & 0x20 ? 0 : 1;
     if (!isntsc) {
 	maxvpos = MAXVPOS_PAL;
-	maxhpos = MAXHPOS_PAL;
+//	maxhpos = MAXHPOS_PAL;
 	minfirstline = MINFIRSTLINE_PAL;
 	vblank_endline = VBLANK_ENDLINE_PAL;
 	vblank_hz = VBLANK_HZ_PAL;
     } else {
 	maxvpos = MAXVPOS_NTSC;
-	maxhpos = MAXHPOS_NTSC;
+//	maxhpos = MAXHPOS_NTSC;
 	minfirstline = MINFIRSTLINE_NTSC;
 	vblank_endline = VBLANK_ENDLINE_NTSC;
 	vblank_hz = VBLANK_HZ_NTSC;
@@ -1819,7 +1828,7 @@ static __inline__ void COPCON (uae_u16 a)
     copcon = a;
 }
 
-static _INLINE_ void DMACON (int hpos, uae_u16 v)
+static _INLINE_ void DMACON (uae_u16 v, int hpos)
 {
     int i;
 
@@ -1863,7 +1872,9 @@ static _INLINE_ void DMACON (int hpos, uae_u16 v)
 	unset_special (SPCFLAG_BLTNASTY);
 
     if (produce_sound) {
+#ifdef EXACT_AUDIO
 	update_audio ();
+#endif
 	check_dma_audio();
 	schedule_audio ();
     }
@@ -2087,8 +2098,10 @@ void INTREQ (uae_u16 v)
 
 static _INLINE_ void ADKCON (uae_u16 v)
 {
+#ifdef EXACT_AUDIO
     if (produce_sound)
 	update_audio ();
+#endif
 
     setclr (&adkcon,v);
     update_adkmasks ();
@@ -2998,7 +3011,12 @@ void blitter_done_notify (void)
 
 void do_copper (void)
 {
-    int hpos = current_hpos ();
+    int hpos;
+    update_current_hpos();
+    hpos = current_hpos();
+#ifdef CUT_COPPER
+    if (hpos&1)
+#endif
     update_copper (hpos);
 }
 
@@ -3021,7 +3039,11 @@ static __inline__ void sync_copper_with_cpu (int hpos, int do_schedule, unsigned
 	    events_schedule ();
         setcopper();
     }
+#ifndef CUT_COPPER
     if (copper_enabled_thisline)
+#else
+    if ((copper_enabled_thisline)&&(hpos&1))
+#endif
 	update_copper (hpos);
 }
 
@@ -3261,6 +3283,7 @@ static void hsync_handler (void)
 #endif
     /* Using 0x8A makes sure that we don't accidentally trip over the
        modified_regtypes check.  */
+    update_current_hpos();
     sync_copper_with_cpu (maxhpos, 0, 0x8A);
 
     finish_decisions ();
@@ -3271,8 +3294,11 @@ static void hsync_handler (void)
     eventtab[ev_hsync].oldcycles = get_cycles ();
     CIA_hsync_handler ();
 
-    if (produce_sound) {
+    if (produce_sound)
+    {
+// #ifdef EXACT_AUDIO
 	update_audio();
+// #endif
 	fetch_audio();
     }
 
@@ -3395,7 +3421,11 @@ void customreset (void)
 {
     int i;
     int zero = 0;
-	    for (i = 0; i < 32; i++) {
+
+    if (! savestate_state)
+    {
+	for (i = 0; i < 32; i++)
+	{
 		current_colors.color_uae_regs_ecs[i] = 0;
 		current_colors.acolors[i] = xcolors[0];
 	    }
@@ -3421,12 +3451,13 @@ void customreset (void)
 	FMODE (0);
 	CLXCON (0);
 	lof = 0;
-
+    }
     n_frames = 0;
     vsync_handler_cnt_disk_change = 0;
 
     DISK_reset ();
     CIA_reset ();
+    if (! savestate_state)
     unset_special (~(SPCFLAG_BRK));
 
     vpos = 0;
@@ -3472,12 +3503,46 @@ void customreset (void)
     init_regtypes ();
 
     sprite_buffer_res = RES_LORES;
+    if (savestate_state == STATE_RESTORE)
+    {
+	    uae_u16 v;
+	    uae_u32 vv;
+
+	    update_adkmasks ();
+	    INTENA (0);
+	    INTREQ (0);
+
+	    COPJMP1 (0);
+	    if (diwhigh)
+		        diwhigh_written = 1;
+	    v = bplcon0;
+	    BPLCON0 (0, 0);
+	    BPLCON0 (0, v);
+	    FMODE (fmode);
+
+	    for(i = 0 ; i < 32 ; i++)
+	    {
+		    vv = current_colors.color_uae_regs_ecs[i];
+		    current_colors.color_uae_regs_ecs[i] = (unsigned)-1;
+		    record_color_change (0, i, vv);
+		    remembered_color_entry = -1;
+		    current_colors.color_uae_regs_ecs[i] = vv;
+		    current_colors.acolors[i] = xcolors[vv];
+	    }
+	    CLXCON (clxcon);
+	    CLXCON2 (clxcon2);
+	    calcdiw ();
+	    write_log ("State restored\n");
+	    dumpcustom ();
+	    for (i = 0; i < 8; i++)
+		        nr_armed += spr[i].armed != 0;
+    }
     expand_sprres ();
 }
 
 void dumpcustom (void)
 {
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(DINGOO)
     write_log ("DMACON: %x INTENA: %x INTREQ: %x VPOS: %x HPOS: %x\n", DMACONR(),
 	       (unsigned int)intena, (unsigned int)intreq, (unsigned int)vpos, (unsigned int)current_hpos());
     write_log ("COP1LC: %08lx, COP2LC: %08lx\n", (unsigned long)cop1lc, (unsigned long)cop2lc);
@@ -3593,7 +3658,9 @@ static __inline__ uae_u32 REGPARAM2 custom_wget_1 (uaecptr addr)
     dbgf("custom_wget_1 0x%X\n",addr&0xFFFF);
 #endif
     uae_u16 v;
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
     switch (addr & 0x1FE) {
      case 0x002: v = DMACONR (); break;
      case 0x004: v = VPOSR (); break;
@@ -3650,7 +3717,9 @@ uae_u32 REGPARAM2 custom_bget (uaecptr addr)
 #ifdef DEBUG_CUSTOM
 //  dbg("custom_bget");
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
     return custom_wget (addr & 0xfffe) >> (addr & 1 ? 0 : 8);
 }
 
@@ -3659,7 +3728,9 @@ uae_u32 REGPARAM2 custom_lget (uaecptr addr)
 #ifdef DEBUG_CUSTOM
 //  dbg("custom_lget");
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
     return ((uae_u32)custom_wget (addr & 0xfffe) << 16) | custom_wget ((addr + 2) & 0xfffe);
 }
 
@@ -3722,7 +3793,7 @@ void REGPARAM2 custom_wput_1 (int hpos, uaecptr addr, uae_u32 value)
      case 0x092: DDFSTRT (hpos, value); break;
      case 0x094: DDFSTOP (hpos, value); break;
 
-     case 0x096: DMACON (hpos, value); break;
+     case 0x096: DMACON (value, hpos); break;
      case 0x098: CLXCON (value); break;
      case 0x09A: INTENA (value); break;
      case 0x09C: INTREQ (value); break;
@@ -3846,7 +3917,9 @@ void REGPARAM2 custom_wput (uaecptr addr, uae_u32 value)
     dbgf("custom_wput 0x%X 0x%X\n",addr,value);
 #endif
     int hpos = current_hpos ();
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_WRITE;
+#endif
 
     sync_copper_with_cpu (hpos, 1, addr);
     custom_wput_1 (hpos, addr, value);
@@ -3864,7 +3937,9 @@ void REGPARAM2 custom_bput (uaecptr addr, uae_u32 value)
     static int warned = 0;
     /* Is this correct now? (There are people who bput things to the upper byte of AUDxVOL). */
     uae_u16 rval = (value << 8) | (value & 0xFF);
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_WRITE;
+#endif
     custom_wput (addr, rval);
     if (!warned)
     {
@@ -3875,8 +3950,374 @@ void REGPARAM2 custom_bput (uaecptr addr, uae_u32 value)
 
 void REGPARAM2 custom_lput(uaecptr addr, uae_u32 value)
 {
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_WRITE;
+#endif
     custom_wput (addr & 0xfffe, value >> 16);
     custom_wput ((addr + 2) & 0xfffe, (uae_u16)value);
 }
 
+
+void custom_prepare_savestate (void)
+{
+    /* force blitter to finish, no support for saving full blitter state yet */
+    if (eventtab[ev_blitter].active) {
+	unsigned int olddmacon = dmacon;
+	dmacon |= DMA_BLITTER; /* ugh.. */
+	blitter_handler ();
+	dmacon = olddmacon;
+    }
+}
+
+extern SDLKey vkbd_button2;
+extern SDLKey vkbd_button3;
+extern SDLKey vkbd_button4;
+#define RB restore_u8 ()
+#define RW restore_u16 ()
+#define RL restore_u32 ()
+
+uae_u8 *restore_custom (uae_u8 *src)
+{
+    uae_u16 dsklen, dskbytr, dskdatr, u16;
+    uae_u32 u32;
+    int dskpt;
+    int i;
+
+    audio_reset ();
+
+    RL;				/* 000 chipset_mask */
+    RW;				/* 000 ? */
+    RW;				/* 002 DMACONR */
+    RW;				/* 004 VPOSR */
+    RW;				/* 006 VHPOSR */
+    dskdatr = RW;		/* 008 DSKDATR */
+    RW;				/* 00A JOY0DAT */
+    RW;				/* 00C JOY1DAT */
+    clxdat = RW;		/* 00E CLXDAT */
+    RW;				/* 010 ADKCONR */
+    RW;				/* 012 POT0DAT* */
+    RW;				/* 014 POT1DAT* */
+    RW;				/* 016 POTINP* */
+    RW;				/* 018 SERDATR* */
+    dskbytr = RW;		/* 01A DSKBYTR */
+    RW;				/* 01C INTENAR */
+    RW;				/* 01E INTREQR */
+    dskpt =  RL;			/* 020-022 DSKPT */
+    dsklen = RW;		/* 024 DSKLEN */
+    RW;				/* 026 DSKDAT */
+    RW;				/* 028 REFPTR */
+    lof = RW;			/* 02A VPOSW */
+    RW;				/* 02C VHPOSW */
+    u16=RW; COPCON(u16);	/* 02E COPCON */
+    RW;				/* 030 SERDAT* */
+    RW;				/* 032 SERPER* */
+    u16=RW; POTGO(u16);		/* 034 POTGO */
+    RW;				/* 036 JOYTEST* */
+    RW;				/* 038 STREQU */
+    RW;				/* 03A STRVHBL */
+    RW;				/* 03C STRHOR */
+    RW;				/* 03E STRLONG */
+    u16=RW; BLTCON0(u16);	/* 040 BLTCON0 */
+    u16=RW; BLTCON1(u16);	/* 042 BLTCON1 */
+    u16=RW; BLTAFWM(u16);	/* 044 BLTAFWM */
+    u16=RW; BLTALWM(u16);	/* 046 BLTALWM */
+    bltcpt=RL; // u32=RL; BLTCPTH(u32);	/* 048-04B BLTCPT */
+    bltbpt=RL; // u32=RL; BLTBPTH(u32);	/* 04C-04F BLTBPT */
+    bltapt=RL; // u32=RL; BLTAPTH(u32);	/* 050-053 BLTAPT */
+    bltdpt=RL; // u32=RL; BLTDPTH(u32);	/* 054-057 BLTDPT */
+    RW;				/* 058 BLTSIZE */
+    RW;				/* 05A BLTCON0L */
+    oldvblts = RW;		/* 05C BLTSIZV */
+    RW;				/* 05E BLTSIZH */
+    u16=RW; BLTCMOD(u16);	/* 060 BLTCMOD */
+    u16=RW; BLTBMOD(u16);	/* 062 BLTBMOD */
+    u16=RW; BLTAMOD(u16);	/* 064 BLTAMOD */
+    u16=RW; BLTDMOD(u16);	/* 066 BLTDMOD */
+    RW;				/* 068 ? */
+    RW;				/* 06A ? */
+    RW;				/* 06C ? */
+    RW;				/* 06E ? */
+    u16=RW; BLTCDAT(u16);	/* 070 BLTCDAT */
+    u16=RW; BLTBDAT(u16);	/* 072 BLTBDAT */
+    u16=RW; BLTADAT(u16);	/* 074 BLTADAT */
+    RW;				/* 076 ? */
+    RW;				/* 078 ? */
+    RW;				/* 07A ? */
+    RW;				/* 07C LISAID */
+    u16=RW; DSKSYNC(u16);	/* 07E DSKSYNC */
+    cop1lc =  RL;		/* 080/082 COP1LC */
+    cop2lc =  RL;		/* 084/086 COP2LC */
+    RW;				/* 088 ? */
+    RW;				/* 08A ? */
+    RW;				/* 08C ? */
+    diwstrt = RW;		/* 08E DIWSTRT */
+    diwstop = RW;		/* 090 DIWSTOP */
+    ddfstrt = RW;		/* 092 DDFSTRT */
+    ddfstop = RW;		/* 094 DDFSTOP */
+    dmacon = RW & ~(0x2000|0x4000); /* 096 DMACON */
+    u16=RW; CLXCON(u16);	/* 098 CLXCON */
+    intena = RW;		/* 09A INTENA */
+    intreq = RW;		/* 09C INTREQ */
+    adkcon = RW;		/* 09E ADKCON */
+    SET_INTERRUPT();
+    for (i = 0; i < 8; i++)
+	bpl[i].pt = RL;
+    bplcon0 = RW;		/* 100 BPLCON0 */
+    bplcon1 = RW;		/* 102 BPLCON1 */
+    bplcon2 = RW;		/* 104 BPLCON2 */
+    bplcon3 = RW;		/* 106 BPLCON3 */
+    bpl1mod = RW;		/* 108 BPL1MOD */
+    bpl2mod = RW;		/* 10A BPL2MOD */
+    bplcon4 = RW;		/* 10C BPLCON4 */
+    clxcon2 = RW;		/* 10E CLXCON2* */
+    for(i = 0; i < 8; i++)
+	RW;			/*     BPLXDAT */
+    for(i = 0; i < 32; i++)
+	current_colors.color_uae_regs_ecs[i] = RW; /* 180 COLORxx */
+    RW;				/* 1C0 ? */
+    RW;				/* 1C2 ? */
+    RW;				/* 1C4 ? */
+    RW;				/* 1C6 ? */
+    RW;				/* 1C8 ? */
+    RW;				/* 1CA ? */
+    RW;				/* 1CC ? */
+    RW;				/* 1CE ? */
+    RW;				/* 1D0 ? */
+    RW;				/* 1D2 ? */
+    RW;				/* 1D4 ? */
+    RW;				/* 1D6 ? */
+    RW;				/* 1D8 ? */
+    RW;				/* 1DA ? */
+    new_beamcon0 = RW;		/* 1DC BEAMCON0 */
+    RW;				/* 1DE ? */
+#if 0
+    RW;				/* 1E0 ? */
+    RW;				/* 1E2 ? */
+    RW;				/* 1E4 ? */
+#else
+    vkbd_button2 = (SDLKey) RW;
+    vkbd_button3 = (SDLKey) RW;
+    vkbd_button4 = (SDLKey) RW;
+#endif
+    RW;				/* 1E6 ? */
+    RW;				/* 1E8 ? */
+    RW;				/* 1EA ? */
+    RW;				/* 1EC ? */
+    RW;				/* 1EE ? */
+    RW;				/* 1F0 ? */
+    RW;				/* 1F2 ? */
+    RW;				/* 1F4 ? */
+    RW;				/* 1F6 ? */
+    RW;				/* 1F8 ? */
+    RW;				/* 1FA ? */
+    fmode = RW;			/* 1FC FMODE */
+    RW;				/* 1FE ? */
+
+    DISK_restore_custom (dskpt, dsklen, dskdatr, dskbytr);
+
+    return src;
+}
+
+
+#define SB save_u8
+#define SW save_u16
+#define SL save_u32
+
+uae_u8 *save_custom (int *len)
+{
+    uae_u8 *dstbak, *dst;
+    int i;
+    uae_u32 dskpt;
+    uae_u16 dsklen, dsksync, dskdatr, dskbytr;
+
+    DISK_save_custom (&dskpt, &dsklen, &dsksync, &dskdatr, &dskbytr);
+    dstbak = dst = (uae_u8 *)malloc (8+256*2);
+    SL (0);			/* 000 chipset_mask */
+    SW (0);			/* 000 ? */
+    SW (dmacon);		/* 002 DMACONR */
+    SW (VPOSR());		/* 004 VPOSR */
+    SW (VHPOSR());		/* 006 VHPOSR */
+    SW (dskdatr);		/* 008 DSKDATR */
+    SW (JOY0DAT());		/* 00A JOY0DAT */
+    SW (JOY1DAT());		/* 00C JOY1DAT */
+    SW (clxdat);		/* 00E CLXDAT */
+    SW (ADKCONR());		/* 010 ADKCONR */
+    SW (POT0DAT());		/* 012 POT0DAT */
+    SW (POT0DAT());		/* 014 POT1DAT */
+    SW (0)	;		/* 016 POTINP * */
+    SW (0);			/* 018 SERDATR * */
+    SW (dskbytr);		/* 01A DSKBYTR */
+    SW (INTENAR());		/* 01C INTENAR */
+    SW (INTREQR());		/* 01E INTREQR */
+    SL (dskpt);			/* 020-023 DSKPT */
+    SW (dsklen);		/* 024 DSKLEN */
+    SW (0);			/* 026 DSKDAT */
+    SW (0);			/* 028 REFPTR */
+    SW (lof);			/* 02A VPOSW */
+    SW (0);			/* 02C VHPOSW */
+    SW (copcon);		/* 02E COPCON */
+    SW (0); //serper);		/* 030 SERDAT * */
+    SW (0); //serdat);		/* 032 SERPER * */
+    SW (potgo_value);		/* 034 POTGO */
+    SW (0);			/* 036 JOYTEST * */
+    SW (0);			/* 038 STREQU */
+    SW (0);			/* 03A STRVBL */
+    SW (0);			/* 03C STRHOR */
+    SW (0);			/* 03E STRLONG */
+    SW (bltcon0);		/* 040 BLTCON0 */
+    SW (bltcon1);		/* 042 BLTCON1 */
+    SW (blt_info.bltafwm);	/* 044 BLTAFWM */
+    SW (blt_info.bltalwm);	/* 046 BLTALWM */
+    SL (bltcpt);		/* 048-04B BLTCPT */
+    SL (bltbpt);		/* 04C-04F BLTCPT */
+    SL (bltapt);		/* 050-043 BLTCPT */
+    SL (bltdpt);		/* 054-057 BLTCPT */
+    SW (0);			/* 058 BLTSIZE */
+    SW (0);			/* 05A BLTCON0L (use BLTCON0 instead) */
+    SW (oldvblts);		/* 05C BLTSIZV */
+    SW (blt_info.hblitsize);	/* 05E BLTSIZH */
+    SW (blt_info.bltcmod);	/* 060 BLTCMOD */
+    SW (blt_info.bltbmod);	/* 062 BLTBMOD */
+    SW (blt_info.bltamod);	/* 064 BLTAMOD */
+    SW (blt_info.bltdmod);	/* 066 BLTDMOD */
+    SW (0);			/* 068 ? */
+    SW (0);			/* 06A ? */
+    SW (0);			/* 06C ? */
+    SW (0);			/* 06E ? */
+    SW (blt_info.bltcdat);	/* 070 BLTCDAT */
+    SW (blt_info.bltbdat);	/* 072 BLTBDAT */
+    SW (blt_info.bltadat);	/* 074 BLTADAT */
+    SW (0);			/* 076 ? */
+    SW (0);			/* 078 ? */
+    SW (0);			/* 07A ? */
+    SW (DENISEID());		/* 07C DENISEID/LISAID */
+    SW (dsksync);		/* 07E DSKSYNC */
+    SL (cop1lc);		/* 080-083 COP1LC */
+    SL (cop2lc);		/* 084-087 COP2LC */
+    SW (0);			/* 088 ? */
+    SW (0);			/* 08A ? */
+    SW (0);			/* 08C ? */
+    SW (diwstrt);		/* 08E DIWSTRT */
+    SW (diwstop);		/* 090 DIWSTOP */
+    SW (ddfstrt);		/* 092 DDFSTRT */
+    SW (ddfstop);		/* 094 DDFSTOP */
+    SW (dmacon);		/* 096 DMACON */
+    SW (clxcon);		/* 098 CLXCON */
+    SW (intena);		/* 09A INTENA */
+    SW (intreq);		/* 09C INTREQ */
+    SW (adkcon);		/* 09E ADKCON */
+    for (i = 0; i < 8; i++)
+	SL (bpl[i].pt);		/* 0E0-0FE BPLxPT */
+    SW (bplcon0);		/* 100 BPLCON0 */
+    SW (bplcon1);		/* 102 BPLCON1 */
+    SW (bplcon2);		/* 104 BPLCON2 */
+    SW (bplcon3);		/* 106 BPLCON3 */
+    SW (bpl1mod);		/* 108 BPL1MOD */
+    SW (bpl2mod);		/* 10A BPL2MOD */
+    SW (bplcon4);		/* 10C BPLCON4 */
+    SW (clxcon2);		/* 10E CLXCON2 */
+    for (i = 0;i < 8; i++)
+	SW (0);			/* 110 BPLxDAT */
+    for ( i = 0; i < 32; i++)
+	SW (current_colors.color_uae_regs_ecs[i]); /* 180-1BE COLORxx */
+    SW (0);			/* 1C0 */
+    SW (0);			/* 1C2 */
+    SW (0);			/* 1C4 */
+    SW (0);			/* 1C6 */
+    SW (0);			/* 1C8 */
+    SW (0);			/* 1CA */
+    SW (0);			/* 1CC */
+    SW (0);			/* 1CE */
+    SW (0);			/* 1D0 */
+    SW (0);			/* 1D2 */
+    SW (0);			/* 1D4 */
+    SW (0);			/* 1D6 */
+    SW (0);			/* 1D8 */
+    SW (0);			/* 1DA */
+    SW (beamcon0);		/* 1DC BEAMCON0 */
+    SW (0);			/* 1DE */
+#if 0
+    SW (0);			/* 1E0 */
+    SW (0);			/* 1E2 */
+    SW (0);			/* 1E4 */
+#else
+    SW (vkbd_button2);
+    SW (vkbd_button3);
+    SW (vkbd_button4);
+#endif
+    SW (0);			/* 1E6 */
+    SW (0);			/* 1E8 */
+    SW (0);			/* 1EA */
+    SW (0);			/* 1EC */
+    SW (0);			/* 1EE */
+    SW (0);			/* 1F0 */
+    SW (0);			/* 1F2 */
+    SW (0);			/* 1F4 */
+    SW (0);			/* 1F6 */
+    SW (0);			/* 1F8 */
+    SW (0);			/* 1FA */
+    SW (fmode);			/* 1FC FMODE */
+    SW (0xffff);		/* 1FE */
+
+    *len = dst - dstbak;
+    return dstbak;
+}
+
+uae_u8 *restore_custom_agacolors (uae_u8 *src)
+{
+    int i;
+
+    for (i = 0; i < 256; i++)
+	/*current_colors.color_regs_aga[i] = */ RL;
+    return src;
+}
+
+uae_u8 *save_custom_agacolors (int *len)
+{
+    uae_u8 *dstbak, *dst;
+    int i;
+
+    dstbak = dst = (uae_u8 *)malloc (256*4);
+    for (i = 0; i < 256; i++)
+	SL (0); //current_colors.color_regs_aga[i]);
+    *len = dst - dstbak;
+    return dstbak;
+}
+
+uae_u8 *restore_custom_sprite (uae_u8 *src, int num)
+{
+    spr[num].pt = RL;		/* 120-13E SPRxPT */
+    sprpos[num] = RW;		/* 1x0 SPRxPOS */
+    sprctl[num] = RW;		/* 1x2 SPRxPOS */
+    sprdata[num][0] = RW;	/* 1x4 SPRxDATA */
+    sprdatb[num][0] = RW;	/* 1x6 SPRxDATB */
+    sprdata[num][1] = RW;
+    sprdatb[num][1] = RW;
+    sprdata[num][2] = RW;
+    sprdatb[num][2] = RW;
+    sprdata[num][3] = RW;
+    sprdatb[num][3] = RW;
+    spr[num].armed = RB;
+    return src;
+}
+
+uae_u8 *save_custom_sprite(int *len, int num)
+{
+    uae_u8 *dstbak, *dst;
+
+    dstbak = dst = (uae_u8 *)malloc (25);
+    SL (spr[num].pt);		/* 120-13E SPRxPT */
+    SW (sprpos[num]);		/* 1x0 SPRxPOS */
+    SW (sprctl[num]);		/* 1x2 SPRxPOS */
+    SW (sprdata[num][0]);	/* 1x4 SPRxDATA */
+    SW (sprdatb[num][0]);	/* 1x6 SPRxDATB */
+    SW (sprdata[num][1]);
+    SW (sprdatb[num][1]);
+    SW (sprdata[num][2]);
+    SW (sprdatb[num][2]);
+    SW (sprdata[num][3]);
+    SW (sprdatb[num][3]);
+    SB (spr[num].armed ? 1 : 0);
+    *len = dst - dstbak;
+    return dstbak;
+}

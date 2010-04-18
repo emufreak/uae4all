@@ -19,6 +19,7 @@
 #include "events.h"
 #include "m68k/m68k_intrf.h"
 #include "autoconf.h"
+#include "savestate.h"
 
 #include "zfile.h"
 
@@ -33,7 +34,9 @@ void clear_fame_mem_dummy(void);
 #endif
 
 /* Set by each memory handler that does not simply access real memory.  */
+#ifdef USE_SPECIAL_MEM
 int special_mem;
+#endif
 
 int ersatzkickfile = 0;
 
@@ -47,6 +50,11 @@ uae_u32 allocated_a3000mem;
 static long chip_filepos;
 static long bogo_filepos;
 static long rom_filepos;
+
+#ifdef USE_LIB7Z
+#include "lib7z/lzma.h"
+static long compressed_size;
+#endif
 
 addrbank *mem_banks[65536];
 
@@ -103,7 +111,9 @@ uae_u32 REGPARAM2 dummy_lget (uaecptr addr)
 #ifdef DEBUG_MEMORY
     dbgf("dummy_lget 0x%X\n",addr);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
     return 0xFFFFFFFF;
 }
 
@@ -112,7 +122,9 @@ uae_u32 REGPARAM2 dummy_wget (uaecptr addr)
 #ifdef DEBUG_MEMORY
     dbgf("dummy_wget 0x%X\n",addr);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
     return 0xFFFF;
 }
 
@@ -121,7 +133,9 @@ uae_u32 REGPARAM2 dummy_bget (uaecptr addr)
 #ifdef DEBUG_MEMORY
     dbgf("dummy_bget 0x%X\n",addr);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
     return 0xFF;
 }
 
@@ -130,26 +144,34 @@ void REGPARAM2 dummy_lput (uaecptr addr, uae_u32 l)
 #ifdef DEBUG_MEMORY
     dbgf("dummy_lput 0x%X = 0x%X\n",addr,l);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_WRITE;
+#endif
 }
 void REGPARAM2 dummy_wput (uaecptr addr, uae_u32 w)
 {
 #ifdef DEBUG_MEMORY
     dbgf("dummy_wput 0x%X = 0x%X\n",addr,w);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_WRITE;
+#endif
 }
 void REGPARAM2 dummy_bput (uaecptr addr, uae_u32 b)
 {
 #ifdef DEBUG_MEMORY
     dbgf("dummy_bput 0x%X = 0x%X\n",addr,b);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_WRITE;
+#endif
 }
 
 int REGPARAM2 dummy_check (uaecptr addr, uae_u32 size)
 {
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
 
     return 0;
 }
@@ -170,7 +192,9 @@ uae_u32 REGPARAM2 mbres_lget (uaecptr addr)
 #ifdef DEBUG_MEMORY
     dbgf("mbres_lget 0x%X\n",addr);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
 
     return 0;
 }
@@ -180,7 +204,9 @@ uae_u32 REGPARAM2 mbres_wget (uaecptr addr)
 #ifdef DEBUG_MEMORY
     dbgf("mbres_wget 0x%X\n",addr);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
 
     return 0;
 }
@@ -190,7 +216,9 @@ uae_u32 REGPARAM2 mbres_bget (uaecptr addr)
 #ifdef DEBUG_MEMORY
     dbgf("mbres_bget 0x%X\n",addr);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_READ;
+#endif
 
     return (addr & 0xFFFF) == 3 ? mbres_val : 0;
 }
@@ -200,21 +228,27 @@ void REGPARAM2 mbres_lput (uaecptr addr, uae_u32 l)
 #ifdef DEBUG_MEMORY
     dbgf("mbres_lput 0x%X = 0x%X\n",addr,l);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_WRITE;
+#endif
 }
 void REGPARAM2 mbres_wput (uaecptr addr, uae_u32 w)
 {
 #ifdef DEBUG_MEMORY
     dbgf("mbres_wput 0x%X = 0x%X\n",addr,w);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_WRITE;
+#endif
 }
 void REGPARAM2 mbres_bput (uaecptr addr, uae_u32 b)
 {
 #ifdef DEBUG_MEMORY
     dbgf("mbres_bput 0x%X = 0x%X\n",addr,b);
 #endif
+#ifdef USE_SPECIAL_MEM
     special_mem |= S_WRITE;
+#endif
 
     if ((addr & 0xFFFF) == 3)
 	mbres_val = b;
@@ -1076,6 +1110,7 @@ static void init_mem_banks (void)
     for (i = 0; i < 65536; i++)
 	put_mem_bank (i << 16, &dummy_bank, 0);
 #ifdef USE_FAME_CORE
+    if (!savestate_state)
     init_memmaps(&dummy_bank);
 #endif
 }
@@ -1090,13 +1125,39 @@ static void allocate_memory (void)
 	allocated_chipmem = prefs_chipmem_size;
 	chipmem_mask = allocated_chipmem - 1;
 
-	chipmemory = mapped_malloc (allocated_chipmem, "chip");
+	chipmemory = (uae_u8 *)mapped_malloc (allocated_chipmem, "chip");
 
 	if (chipmemory == 0) {
 	    write_log ("Fatal error: out of memory for chipmem.\n");
 	    allocated_chipmem = 0;
 	} else
 	    do_put_mem_long ((uae_u32 *)(chipmemory + 4), swab_l(0));
+    }
+
+    if (savestate_state == STATE_RESTORE)
+    {
+	    fseek (savestate_file, chip_filepos, SEEK_SET);
+#ifdef USE_LIB7Z
+	    void *tmp=malloc(compressed_size);
+	    int outSize=allocated_chipmem;
+	    int inSize=compressed_size;
+	    SRes res;
+	    fread (tmp, 1, compressed_size, savestate_file);
+	    res=Lzma_Decode((Byte *)chipmemory, (size_t *)&outSize, (const Byte *)tmp, (size_t *)&inSize);
+	    free(tmp);
+	    if(res != SZ_OK)
+	    {
+		   allocated_chipmem=compressed_size;
+	    	   fseek (savestate_file, chip_filepos, SEEK_SET);
+	    }
+	    if(res != SZ_OK)
+#endif
+	    fread (chipmemory, 1, allocated_chipmem, savestate_file);
+	    if (allocated_bogomem > 0)
+	    {
+		    fseek (savestate_file, bogo_filepos, SEEK_SET);
+		    fread (bogomemory, 1, allocated_bogomem, savestate_file);
+	    }
     }
 
     chipmem_bank.baseaddr = chipmemory;
@@ -1365,9 +1426,112 @@ uae_u8 *save_bram (int *len)
 void restore_cram (int len, long filepos)
 {
     chip_filepos = filepos;
+#ifdef USE_LIB7Z
+    compressed_size=len;
+#else
+    prefs_chipmem_size = len;
+#endif
 }
 
 void restore_bram (int len, long filepos)
 {
     bogo_filepos = filepos;
+}
+
+uae_u8 *restore_rom (uae_u8 *src)
+{
+    restore_u32 ();
+    restore_u32 ();
+    restore_u32 ();
+    restore_u32 ();
+    restore_u32 ();
+
+    return src;
+}
+
+uae_u8 *save_rom (int first, int *len)
+{
+    static int count;
+    uae_u8 *dst, *dstbak;
+    uae_u8 *mem_real_start;
+    int mem_start, mem_size, mem_type, i, saverom;
+
+    saverom = 0;
+    if (first)
+	count = 0;
+    for (;;) {
+	mem_type = count;
+	switch (count) {
+	case 0:		/* Kickstart ROM */
+	    mem_start = 0xf80000;
+	    mem_real_start = kickmemory;
+	    mem_size = kickmem_size;
+	    /* 256KB or 512KB ROM? */
+	    for (i = 0; i < mem_size / 2 - 4; i++) {
+		if (longget (i + mem_start) != longget (i + mem_start + mem_size / 2))
+		    break;
+	    }
+	    if (i == mem_size / 2 - 4) {
+		mem_size /= 2;
+		mem_start += 262144;
+	    }
+	    mem_type = 0;
+	    break;
+	default:
+	    return 0;
+	}
+	count++;
+	if (mem_size)
+	    break;
+    }
+    dstbak = dst = (uae_u8 *)malloc (4 + 4 + 4 + 4 + 4 + mem_size);
+    save_u32 (mem_start);
+    save_u32 (mem_size);
+    save_u32 (mem_type);
+    save_u32 (longget (mem_start + 12));	/* version+revision */
+    save_u32 (0);
+    sprintf ((char *)dst, "Kickstart %d.%d", wordget (mem_start + 12), wordget (mem_start + 14));
+    dst += strlen ((char *)dst) + 1;
+    if (saverom) {
+	for (i = 0; i < mem_size; i++)
+	    *dst++ = byteget (mem_start + i);
+    }
+    *len = dst - dstbak;
+    return dstbak;
+}
+
+uae_u8 *save_fram (int *len)
+{
+    *len = 0; //allocated_fastmem;
+    return NULL;
+}
+
+uae_u8 *save_zram (int *len)
+{
+    *len = 0; //allocated_z3fastmem;
+    return NULL;
+}
+
+void restore_fram (int len, long filepos)
+{
+}
+
+void restore_zram (int len, long filepos)
+{
+}
+
+uae_u8 *save_expansion (int *len)
+{
+    static uae_u8 t[20], *dst = t;
+    save_u32 (0);
+    save_u32 (0);
+    *len = 8;
+    return dst;
+}
+
+uae_u8 *restore_expansion (uae_u8 *src)
+{
+    restore_u32 ();
+    restore_u32 ();
+    return src;
 }

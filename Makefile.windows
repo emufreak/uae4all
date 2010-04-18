@@ -10,6 +10,7 @@ PROG   = $(NAME).exe
 all: $(PROG)
 
 FAME_CORE=1
+#FAME_CORE_C=1
 
 DEFAULT_CFLAGS = `sdl-config --cflags`
 LDFLAGS        = `sdl-config --libs` -lmingw32 -lmingwex -mwindows
@@ -20,25 +21,40 @@ MORE_CFLAGS+= -DWIN32 -DUSE_ZFILE
 
 MORE_CFLAGS+= -DROM_PATH_PREFIX=\"./\" -DDATA_PREFIX=\"./data/\" -DSAVE_PREFIX=\"./\"
 
-#MORE_CFLAGS+= -DNO_SOUND
+
+#MORE_CFLAGS+=-DNO_VKBD
+MORE_CFLAGS+= -DNO_SOUND
+MORE_CFLAGS+= -DEMULATED_JOYSTICK
 MORE_CFLAGS+= -DFAME_INTERRUPTS_PATCH
 
 #MORE_CFLAGS+= -DDEBUG_UAE4ALL
-#MORE_CFLAGS+= -DDEBUG_UAE4ALL_FFLUSH
+##MORE_CFLAGS+= -DDEBUG_UAE4ALL_FFLUSH
 #MORE_CFLAGS+= -DDEBUG_M68K
-MORE_CFLAGS+= -DDEBUG_INTERRUPTS
+#MORE_CFLAGS+= -DDEBUG_INTERRUPTS
 #MORE_CFLAGS+= -DDEBUG_CIA
-#MORE_CFLAGS+= -DDEBUG_SOUND
+##MORE_CFLAGS+= -DDEBUG_SOUND
 #MORE_CFLAGS+= -DDEBUG_MEMORY
 #MORE_CFLAGS+= -DDEBUG_DISK
 #MORE_CFLAGS+= -DDEBUG_CUSTOM
-#MORE_CFLAGS+= -DDEBUG_GFX -DDEBUG_BLITTER
-#MORE_CFLAGS+= -DDEBUG_FRAMERATE
+#MORE_CFLAGS+= -DDEBUG_SAVESTATE
+##MORE_CFLAGS+= -DDEBUG_GFX -DDEBUG_BLITTER
+##MORE_CFLAGS+= -DDEBUG_FRAMERATE
+#MORE_CFLAGS+= -DSTART_DEBUG=1855
+#MORE_CFLAGS+= -DMAX_AUTOEVENTS=1856
+#MORE_CFLAGS+= -DSTART_DEBUG_SAVESTATE
+##MORE_CFLAGS+= -DAUTO_SAVESTATE=400
+##MORE_CFLAGS+= -DMAX_AUTOEVENTS=401
+#MORE_CFLAGS+= -DAUTO_RUN
+#MORE_CFLAGS+= -DAUTOEVENTS
+##MORE_CFLAGS+= -DPROFILER_UAE4ALL
+##MORE_CFLAGS+= -DAUTO_PROFILER=4000
+##MORE_CFLAGS+= -DMAX_AUTO_PROFILER=5000
 
 
 CFLAGS  = -I/usr/local/include $(DEFAULT_CFLAGS) $(MORE_CFLAGS)
 
 OBJS =	\
+	src/savestate.o \
 	src/audio.o \
 	src/autoconf.o \
 	src/blitfunc.o \
@@ -67,15 +83,20 @@ OBJS =	\
 	src/menu/menu.o \
 	src/menu/menu_load.o \
 	src/menu/menu_main.o \
-	src/vkbd/vkbd.o \
+	src/vkbd/vkbd.o 
 
 ifdef FAME_CORE
+ifdef FAME_CORE_C
+CFLAGS+=-DUSE_FAME_CORE -DUSE_FAME_CORE_C
+src/m68k/fame/famec.o: src/m68k/fame/famec.cpp
+OBJS += src/m68k/fame/famec.o
+else
 CFLAGS+=-DUSE_FAME_CORE
-src/m68k/fame/fame_win.o: src/m68k/fame/fame_win.asm
-	nasm -f gnuwin32 src/m68k/fame/fame_win.asm
-OBJS += \
-	src/m68k/fame/fame_win.o \
-	src/m68k/fame/m68k_intrf.o
+src/m68k/fame/fame.o: src/m68k/fame/fame_win.asm
+	nasm -f win32 -o src/m68k/fame/fame.o src/m68k/fame/fame_win.asm
+OBJS += src/m68k/fame/fame.o
+endif
+OBJS += src/m68k/fame/m68k_intrf.o
 else
 OBJS += \
 	src/m68k/uae/newcpu.o \
@@ -89,7 +110,7 @@ endif
 CPPFLAGS  = $(CFLAGS) -fno-exceptions -I./src
 
 $(PROG): $(OBJS) 
-	$(CC) -L/usr/local/lib -L. -o $(PROG) -lmingw32 $(OBJS) -lSDL_static_129 -lstdc++ -lpthread -mwindows -mno-cygwin -luser32 -lgdi32 -lwinmm -ldxguid
+	$(CC) -L/usr/lib/mingw -L/usr/local/lib -L. -o $(PROG) -lmingw32 $(OBJS) -lSDL_static_129 -lstdc++ -lpthread -mwindows -mno-cygwin -luser32 -lgdi32 -lwinmm -ldxguid
 	strip $(PROG)
 
 #	$(CC) $(CFLAGS) -o $(PROG) $(OBJS) $(LDFLAGS)

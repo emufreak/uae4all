@@ -38,7 +38,8 @@ void guarda(void);
 #include "keybuf.h"
 #include "gui.h"
 #include "debug.h"
-
+#include "savestate.h"
+#include "menu/menu.h"
 #include "vkbd/vkbd.h"
 
 #ifdef DREAMCAST
@@ -104,7 +105,11 @@ void uae4all_show_time(void)
 #ifdef DREAMCAST
 #define VIDEO_FLAGS_INIT SDL_HWSURFACE|SDL_FULLSCREEN
 #else
+#ifdef DINGOO
+#define VIDEO_FLAGS_INIT SDL_SWSURFACE
+#else
 #define VIDEO_FLAGS_INIT SDL_HWSURFACE
+#endif
 #endif
 
 #ifdef DOUBLEBUFFER
@@ -128,6 +133,7 @@ static int red_shift, green_shift, blue_shift;
 static int current_width, current_height;
 static SDL_Color arSDLColors[256];
 static int ncolors = 0;
+extern int emulated_mouse, emulated_mouse_button1, emulated_mouse_button2;
 
 /* Keyboard and mouse */
 int uae4all_keystate[256];
@@ -139,22 +145,36 @@ void flush_block (int ystart, int ystop)
 #ifdef DEBUG_GFX
     dbgf("Function: flush_block %d %d\n", ystart, ystop);
 #endif
+#ifndef DINGOO
 #ifndef DREAMCAST
+    if (SDL_MUSTLOCK(prSDLScreen))
     SDL_UnlockSurface (prSDLScreen);
 #endif
 #ifndef DOUBLEBUFFER
     SDL_UpdateRect(prSDLScreen, 0, ystart, current_width, ystop-ystart+1);
 #endif
+#endif
     if (drawfinished)
     {
 	drawfinished=0;
+	if (show_message)
+	{
+		show_message--;
+		if (!show_message)
+			notice_screen_contents_lost();
+		else
+			_write_text_inv_n(prSDLScreen,0,29,30,show_message_str);
+	}
+	if (emulated_mouse)
+		vkbd_mouse();
 	if (vkbd_mode)
 		vkbd_key=vkbd_process();
-#ifdef DOUBLEBUFFER
+#if defined(DOUBLEBUFFER) || defined(DINGOO)
 	SDL_Flip(prSDLScreen);
 #endif
     }
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(DINGOO)
+    if (SDL_MUSTLOCK(prSDLScreen))
     SDL_LockSurface (prSDLScreen);
 #endif
     uae4all_prof_end(13);
@@ -165,7 +185,7 @@ void black_screen_now(void)
 	if (scaler)
 	    scaler->prepare();
 	SDL_FillRect(prSDLScreen,NULL,0);
-#ifdef DOUBLEBUFFER
+#if defined(DOUBLEBUFFER) || defined(DINGOO)
 	SDL_Flip(prSDLScreen);
 #else
 	SDL_UpdateRect(prSDLScreen, 0, 0, current_width, current_height);
@@ -288,14 +308,16 @@ static void graphics_subinit (void)
 		dbgf("Bytes per Pixel: %d\n", prSDLScreen->format->BytesPerPixel);
 		dbgf("Bytes per Line: %d\n", prSDLScreen->pitch);
 #endif
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(DINGOO)
+		if (SDL_MUSTLOCK(prSDLScreen))
 		SDL_LockSurface(prSDLScreen);
 #endif
 		memset(prSDLScreen->pixels, 0, prSDLScreen->w * prSDLScreen->h * prSDLScreen->format->BytesPerPixel);
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(DINGOO)
+		if (SDL_MUSTLOCK(prSDLScreen))
 		SDL_UnlockSurface(prSDLScreen);
 #endif
-#ifndef DOUBLEBUFFER
+#if !defined(DOUBLEBUFFER) && !defined(DINGOO)
 		SDL_UpdateRect(prSDLScreen, 0, 0, prSDLScreen->w, prSDLScreen->h);
 #else
 		SDL_Flip(prSDLScreen);
@@ -529,16 +551,28 @@ void handle_events (void)
 #endif
 
 
-#ifdef MAX_AUTOEVENTS
+#if defined(MAX_AUTOEVENTS) || defined(AUTOEVENTS)
 	{
 		static unsigned cuenta=0;
-/*
+// /*
 		switch(cuenta&63)
 		{
+			case 8:
+				if ((cuenta<6500)||(cuenta>8000))
+					joy1button=1;
+				break;
 			case 16:
 				buttonstate[0]=1; break;
+			case 24:
+				joy1button=0; break;
+			case 28:
+				if (cuenta>11000)
+					joy1dir=3;
+				break;
 			case 32:
 				buttonstate[0]=0; break;
+			case 62:
+				joy1dir=0; break;
 		}
 //		lastmy+=8;
 		switch(cuenta&127)
@@ -552,10 +586,16 @@ void handle_events (void)
 			case 80:
 				record_key(0x89); break;
 		}
-*/
+if (cuenta==7700)
+{
+strcpy(changed_df[0],"prueba2.adz");
+real_changed_df[0]=1;
+joy1button=1;
+}
+// */
 
 // Defender of the Crown
-// /*
+ /*
 switch(cuenta)
 {
 case 2600:
@@ -593,25 +633,65 @@ break;
 
 }
 // printf("%i -> %.8X\n",cuenta,chipmem_checksum());
-// */
+ */
 
 
-#ifdef START_DEBUG
-		if (cuenta>START_DEBUG)
-			DEBUG_AHORA=1;
+#if defined(START_DEBUG) && !defined(START_DEBUG_SAVESTATE) && !defined(AUTO_SAVESTATE)
+		if (cuenta==START_DEBUG)
+		{
+#ifdef DEBUG_FILE
+			if (!DEBUG_STR_FILE)
+				DEBUG_STR_FILE=fopen(DEBUG_FILE,"wt");
 #endif
+			DEBUG_AHORA=1;
+		}
+#else
+#ifdef START_DEBUG_SAVESTATE
+		if (cuenta==START_DEBUG)
+			savestate_state = STATE_DOSAVE;
+#endif
+#ifdef AUTO_SAVESTATE
+		if (cuenta==AUTO_SAVESTATE)
+			savestate_state = STATE_DORESTORE;
+#endif
+#endif
+
+#ifdef MAX_AUTOEVENTS
 #ifdef DEBUG_EVENTS
 		dbgf(" AUTO EVENTS: %i =?= %i\n",cuenta,MAX_AUTOEVENTS);
 #endif
 		if (cuenta>MAX_AUTOEVENTS)
+		{
+			int i;
+#ifdef DEBUG_FILE
+			fclose(DEBUG_STR_FILE);
+			SDL_Delay(100);
+			for(i=0;i<0x10000;i+=78)
+			{
+				SDL_FillRect(prSDLScreen, NULL, i);
+				SDL_Flip(prSDLScreen);
+			}
+			SDL_Delay(333);
+#endif
 			exit(0);
+		}
 		else
 			dbgf("handle_events %i\n",cuenta);
+#endif
 		cuenta++;
 	}
 #else
     /* Handle GUI events */
     gui_handle_events ();
+
+#ifdef EMULATED_JOYSTICK
+	{
+		if ((vkbd_button3==(SDLKey)0)&&(!vkbd_mode))
+			buttonstate[0]=emulated_mouse_button1;
+		if ((vkbd_button4==(SDLKey)0)&&(!vkbd_mode))
+			buttonstate[2]=emulated_mouse_button2;
+	}
+#endif
 
     while (SDL_PollEvent(&rEvent))
     {
@@ -638,10 +718,22 @@ break;
 #ifdef DEBUG_EVENTS
 	    dbg("Event: key down");
 #endif
-#if !defined(DREAMCAST) && !defined(MAEMO_CHANGES)
-	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP))
+#ifndef DREAMCAST
+	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP)
+#ifdef EMULATED_JOYSTICK
+		&&(rEvent.key.keysym.sym!=SDLK_ESCAPE)&&((rEvent.key.keysym.sym!=SDLK_SPACE)||((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_LCTRL)&&((rEvent.key.keysym.sym!=SDLK_LALT)||((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_RETURN)&&((rEvent.key.keysym.sym!=SDLK_LSHIFT)||((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_TAB)&&(rEvent.key.keysym.sym!=SDLK_BACKSPACE)&&(rEvent.key.keysym.sym!=SDLK_UP)&&(rEvent.key.keysym.sym!=SDLK_DOWN)&&(rEvent.key.keysym.sym!=SDLK_LEFT)&&(rEvent.key.keysym.sym!=SDLK_RIGHT)
+#endif
+			    )
 #endif
 	    {
+		    if ((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode))
+			    rEvent.key.keysym.sym=vkbd_button2;
+		    else
+		    if ((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode))
+			    rEvent.key.keysym.sym=vkbd_button4;
+		    else
+		    if ((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode))
+			    rEvent.key.keysym.sym=vkbd_button3;
 		iAmigaKeyCode = keycode2amiga(&(rEvent.key.keysym));
 		if (iAmigaKeyCode >= 0)
 		{
@@ -651,9 +743,6 @@ break;
 			record_key(iAmigaKeyCode << 1);
 		    }
 		}
-#ifdef MAEMO_CHANGES
-		fake_joysticks(rEvent.key.keysym.sym, 1);
-#endif
 	    }
 	    break;
 	case SDL_JOYBUTTONUP:
@@ -670,19 +759,28 @@ break;
 #ifdef DEBUG_EVENTS
 	    dbg("Event: key up");
 #endif
-#if !defined(DREAMCAST) && !defined(MAEMO_CHANGES)
-	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP))
+#ifndef DREAMCAST
+	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP)
+#ifdef EMULATED_JOYSTICK
+		&&(rEvent.key.keysym.sym!=SDLK_ESCAPE)&&((rEvent.key.keysym.sym!=SDLK_SPACE)||((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_LCTRL)&&((rEvent.key.keysym.sym!=SDLK_LALT)||((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_RETURN)&&((rEvent.key.keysym.sym!=SDLK_LSHIFT)||((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode)))&&(rEvent.key.keysym.sym!=SDLK_TAB)&&(rEvent.key.keysym.sym!=SDLK_BACKSPACE)&&(rEvent.key.keysym.sym!=SDLK_UP)&&(rEvent.key.keysym.sym!=SDLK_DOWN)&&(rEvent.key.keysym.sym!=SDLK_LEFT)&&(rEvent.key.keysym.sym!=SDLK_RIGHT)
+#endif
+			    )
 #endif
 	    {
+		    if ((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode))
+			    rEvent.key.keysym.sym=vkbd_button2;
+		    else
+		    if ((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode))
+			    rEvent.key.keysym.sym=vkbd_button4;
+		    else
+		    if ((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode))
+			    rEvent.key.keysym.sym=vkbd_button3;
 		iAmigaKeyCode = keycode2amiga(&(rEvent.key.keysym));
 		if (iAmigaKeyCode >= 0)
 		{
 		    uae4all_keystate[iAmigaKeyCode] = 0;
 		    record_key((iAmigaKeyCode << 1) | 1);
 		}
-#ifdef MAEMO_CHANGES
-		fake_joysticks(rEvent.key.keysym.sym, 0);
-#endif
 	    }
 	    break;
 	case SDL_MOUSEBUTTONDOWN:
@@ -780,12 +878,13 @@ int needmousehack (void)
 
 
 
-#ifndef DREAMCAST
+#if !defined(DREAMCAST) && !defined(DINGOO)
 int lockscr (void)
 {
 #ifdef DEBUG_GFX
     dbg("Function: lockscr");
 #endif
+    if (SDL_MUSTLOCK(prSDLScreen))
     SDL_LockSurface(prSDLScreen);
     return 1;
 }
@@ -795,6 +894,7 @@ void unlockscr (void)
 #ifdef DEBUG_GFX
     dbg("Function: unlockscr");
 #endif
+    if (SDL_MUSTLOCK(prSDLScreen))
     SDL_UnlockSurface(prSDLScreen);
 }
 #endif

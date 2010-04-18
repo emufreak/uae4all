@@ -35,8 +35,9 @@ KOS_CFLAGS+= -DFAME_INTERRUPTS_PATCH
 #KOS_CFLAGS+= -DDEBUG_DISK
 #KOS_CFLAGS+= -DDEBUG_CUSTOM
 #KOS_CFLAGS+= -DDEBUG_GFX -DDEBUG_BLITTER
-#KOS_CFLAGS+= -DSTART_DEBUG=2609
-#KOS_CFLAGS+= -DMAX_AUTOEVENTS=2610
+#KOS_CFLAGS+= -DSTART_DEBUG=200
+#KOS_CFLAGS+= -DAUTOEVENTS
+#KOS_CFLAGS+= -DMAX_AUTOEVENTS=300
 #KOS_CFLAGS+= -DAUTO_RUN
 
 #KOS_CFLAGS+= -DDEBUG_FRAMERATE
@@ -48,6 +49,8 @@ KOS_CFLAGS+= -DFAME_INTERRUPTS_PATCH
 #KOS_CFLAGS+= -DPROFILER_UAE4ALL
 #KOS_CFLAGS+= -DAUTO_PROFILER=1600
 #KOS_CFLAGS+= -DMAX_AUTO_PROFILER=3000
+#KOS_CFLAGS+= -DAUTO_PROFILER=3600
+#KOS_CFLAGS+= -DMAX_AUTO_PROFILER=5000
 #KOS_CFLAGS+= -DAUTO_PROFILER_SOUND
 #KOS_CFLAGS+= -DAUTO_PROFILER_THROTTLE
 
@@ -62,8 +65,10 @@ all: $(TARGET).bin
 include $(KOS_BASE)/Makefile.rules
 
 FAME_CORE=1
+#FAME_CORE_C=1
 
 OBJS =	\
+	src/savestate.o \
 	src/main.o \
 	src/audio.o \
 	src/autoconf.o \
@@ -96,10 +101,15 @@ OBJS =	\
 	romdisk.o
 
 ifdef FAME_CORE
+ifdef FAME_CORE_C
+KOS_CFLAGS+=-DUSE_FAME_CORE -DUSE_FAME_CORE_C
+src/m68k/fame/famec.o: src/m68k/fame/famec.cpp
+OBJS += src/m68k/fame/famec.o
+else
 KOS_CFLAGS+=-DUSE_FAME_CORE
-OBJS += \
-	src/m68k/fame/fame.o \
-	src/m68k/fame/m68k_intrf.o
+OBJS += src/m68k/fame/fame.o
+endif
+OBJS += src/m68k/fame/m68k_intrf.o
 else
 OBJS += \
 	src/m68k/uae/newcpu.o \
@@ -117,14 +127,14 @@ clean:
 
 $(TARGET).elf: $(OBJS)
 	$(KOS_CC) $(KOS_CFLAGS) $(KOS_LDFLAGS) -o $(TARGET).elf $(KOS_START) \
-	$(OBJS) $(OBJEXTRA) -lSDL_mixer -lSDL_129 -lz_123 -lm $(KOS_LIBS)
+	$(OBJS) $(OBJEXTRA) -lSDL_mixer_126 -lSDL_1213 -lz_123 -lm $(KOS_LIBS)
 
 $(TARGET).bin: $(TARGET).elf
 	$(KOS_OBJCOPY) -R .stack -O binary $(TARGET).elf $(TARGET).bin
 
 romdisk.o: romdisk.img
-#	$(KOS_BASE)/utils/bin2o/bin2o romdisk.img romdisk romdisk.o
-	bin2odc romdisk.img romdisk.o
+	$(KOS_BASE)/utils/bin2o/bin2o romdisk.img romdisk romdisk.o
+#	bin2odc romdisk.img romdisk.o
 
 romdisk.img:
 	$(KOS_GENROMFS) -f romdisk.img -d data -v

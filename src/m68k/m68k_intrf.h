@@ -2,7 +2,7 @@
 
 #ifdef USE_FAME_CORE
 
-#ifdef DREAMCAST
+#if defined(DREAMCAST) || defined(USE_FAME_CORE_C)
 #define M68KCONTEXT m68kcontext
 #else
 #define M68KCONTEXT _m68kcontext
@@ -18,7 +18,7 @@ void map_zone(unsigned addr, addrbank* banco, unsigned realstart);
 void m68k_go (int may_quit);
 void init_m68k (void);
 
-extern struct M68K_CONTEXT M68KCONTEXT;
+extern M68K_CONTEXT M68KCONTEXT;
 extern unsigned mispcflags;
 
 #define flush_icache(X) do {} while (0)
@@ -60,16 +60,6 @@ static __inline__ void fill_prefetch_0 (void)
 
 static __inline__ void dump_counts (void)
 {
-}
-
-static __inline__ uae_u8 *restore_cpu (uae_u8 *src)
-{
-	return src;
-}
-
-static __inline__ uae_u8 *save_cpu (int *len)
-{
-	return (uae_u8 *)len;
 }
 
 #else
