@@ -603,10 +603,10 @@ void gui_handle_events (void)
 		leftSuperThrottle();
 #endif
 #ifdef MAEMO_CHANGES
-	if ( keystate[SDLK_MODE] && keystate[SDLK_KP_ENTER] )
+	if ( keystate[SDLK_MODE] && !keystate[SDLK_LSHIFT] && !keystate[SDLK_LCTRL] && keystate[SDLK_KP_ENTER] )
 		SDL_WM_ToggleFullScreen(prSDLScreen);
 	else
-	if ( keystate[SDLK_MODE] && keystate[SDLK_BACKSPACE] )
+	if ( keystate[SDLK_MODE] && !keystate[SDLK_LSHIFT] && !keystate[SDLK_LCTRL] && keystate[SDLK_BACKSPACE] )
 #else
 #if !defined(DINGOO) && !defined(DREAMCAST)
 	if ( keystate[SDLK_F12] )
