@@ -9,7 +9,7 @@
   */
 
 
-// #define UNROLL_LOOPS
+#define UNROLL_LOOPS
 #define UNROLL_AUDIO_HANDLER
 #define UNROLL_AHI_HANDLER
 // #define SOUND_PREFETCHS
@@ -86,7 +86,7 @@ static const int aprox_vol[128]= {-16, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4,
 		word += audio_channel_current_sample[5]; \
 		word >>= 1; \
 		PUT_SOUND_WORD (word) \
-    		CHECK_SOUND_BUFFERS(); \
+		CHECK_SOUND_BUFFERS(); \
 	} \
 
 
@@ -107,8 +107,8 @@ static const int aprox_vol[128]= {-16, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4,
 		d1 &= audio_channel_adk_mask[1]; \
 		d2 &= audio_channel_adk_mask[2]; \
 		d3 &= audio_channel_adk_mask[3]; \
-	    	PUT_SOUND_WORD (d0+d1+d2+d3) \
-    		CHECK_SOUND_BUFFERS(); \
+		PUT_SOUND_WORD (d0+d1+d2+d3) \
+		CHECK_SOUND_BUFFERS(); \
 	}
 #else
 #define SAMPLE_HANDLER \
@@ -127,8 +127,8 @@ static const int aprox_vol[128]= {-16, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4,
 		d1 &= audio_channel_adk_mask[1]; \
 		d2 &= audio_channel_adk_mask[2]; \
 		d3 &= audio_channel_adk_mask[3]; \
-	    	PUT_SOUND_WORD (d0+d1+d2+d3) \
-    		CHECK_SOUND_BUFFERS(); \
+		PUT_SOUND_WORD (d0+d1+d2+d3) \
+		CHECK_SOUND_BUFFERS(); \
 	}
 #endif
 

@@ -300,7 +300,7 @@ void finish_sound_buffer (void)
 static int get_soundbuf_size(void)
 {
 	int size=SNDBUFFER_LEN>>1;
-    	int channels = 1;
+	int channels = 1;
 	return (size * DEFAULT_SOUND_BITS / 8 * channels);
 }
 
@@ -473,10 +473,10 @@ void uae4all_init_sound(void)
 #endif
 #ifdef MENU_MUSIC
 	unsigned i;
-    	int freq = DEFAULT_SOUND_FREQ_ADJUST;
-    	int format = DEFAULT_SOUND_BITS == 8 ? AUDIO_U8 : AUDIO_S16;
-    	int channels = 1;
-    	int samples = SNDBUFFER_LEN>>1;
+	int freq = DEFAULT_SOUND_FREQ_ADJUST;
+	int format = DEFAULT_SOUND_BITS == 8 ? AUDIO_U8 : AUDIO_S16;
+	int channels = 1;
+	int samples = SNDBUFFER_LEN>>1;
 	Mix_OpenAudio(freq, format, channels, samples);
 #ifdef DEBUG_SOUND
 	dbgf("Freq=%i, Channels=%i, Buff=%i\n",freq,channels,samples);
