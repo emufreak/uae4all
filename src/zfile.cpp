@@ -282,7 +282,7 @@ static void uae4all_disk_real_write(int num)
 			}
 			free(bc);
 			uae4all_disk_actual_crc[num]=new_crc;
-#ifdef GP2X
+#if defined(GP2X) || defined(MAEMO_CHANGES)
 			sync();
 #endif
 		}

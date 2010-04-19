@@ -152,6 +152,12 @@ OBJS =	\
 	src/maemo/keyboard.o \
 	src/maemo/sdlvscalers.o
 
+ifeq ($(SBOX_DPKG_INST_ARCH),armel)
+OBJS+= \
+	src/maemo/memcpy.o \
+	src/maemo/memset.o
+endif
+
 ifdef LIB7Z
 CFLAGS+=-DUSE_LIB7Z
 OBJS+= \

@@ -2197,7 +2197,7 @@ static _INLINE_ void finish_drawing_frame (void)
 
 	i1 = i + min_ypos_for_screen;
 	where = amiga2aspect_line_map[i1];
-#if defined (GP2X) || defined (GIZMONDO) || defined (PSP)
+#if defined (GP2X) || defined (GIZMONDO) || defined (PSP) || defined(MAEMO_CHANGES)
 	if (where >= GFXVIDINFO_HEIGHT - ((showStatus) ? TD_TOTAL_HEIGHT : 0))
 #else
 	if (where >= GFXVIDINFO_HEIGHT - TD_TOTAL_HEIGHT)
@@ -2207,7 +2207,7 @@ static _INLINE_ void finish_drawing_frame (void)
 	    continue;
 	pfield_draw_line (line, where, amiga2aspect_line_map[i1 + 1]);
     }
-#if defined (GP2X) || defined (PSP) || defined (GIZMONDO)
+#if defined (GP2X) || defined (PSP) || defined (GIZMONDO) || defined(MAEMO_CHANGES)
 	if (showStatus)
 	{
 #endif
@@ -2238,12 +2238,14 @@ static _INLINE_ void finish_drawing_frame (void)
     	}
     }
 	
-#if defined (GP2X) || defined (PSP) || defined (GIZMONDO)
+#if defined (GP2X) || defined (PSP) || defined (GIZMONDO) || defined(MAEMO_CHANGES)
 	}
-    if (showmsg) delay++;
 #endif
     drawfinished=1;
     do_flush_screen (first_drawn_line, last_drawn_line);
+#if defined (GP2X)
+    if (showmsg) delay++;
+#endif
 }
 
 
