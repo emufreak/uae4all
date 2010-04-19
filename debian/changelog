@@ -1,3 +1,9 @@
+uae4all (1rc2-4) fremantle; urgency=low
+
+  * Do not show hidden files and directories in file selector.
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Mon, 19 Apr 2010 16:40:19 +0200
+
 uae4all (1rc2-3) fremantle; urgency=low
 
   * Fixed ESC key mapping.
