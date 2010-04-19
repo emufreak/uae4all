@@ -74,7 +74,7 @@ static const int aprox_vol[128]= {-16, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4,
 
 #define CHECK_SOUND_BUFFERS() \
 { \
-    if ((unsigned)sndbufpt - (unsigned)render_sndbuff >= SNDBUFFER_LEN) { \
+    if ((unsigned)sndbufpt - (unsigned)render_sndbuff >= SNDBUFFER_LEN*DEFAULT_SOUND_CHANNELS) { \
 	finish_sound_buffer (); \
     } \
 } \
@@ -107,7 +107,11 @@ static const int aprox_vol[128]= {-16, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4,
 		d1 &= audio_channel_adk_mask[1]; \
 		d2 &= audio_channel_adk_mask[2]; \
 		d3 &= audio_channel_adk_mask[3]; \
-		PUT_SOUND_WORD (d0+d1+d2+d3) \
+		if (DEFAULT_SOUND_CHANNELS==2){ \
+		PUT_SOUND_WORD (d1+d3) \
+		PUT_SOUND_WORD (d0+d2) \
+		}else{ \
+		PUT_SOUND_WORD (d0+d1+d2+d3)} \
 		CHECK_SOUND_BUFFERS(); \
 	}
 #else
@@ -127,7 +131,11 @@ static const int aprox_vol[128]= {-16, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4,
 		d1 &= audio_channel_adk_mask[1]; \
 		d2 &= audio_channel_adk_mask[2]; \
 		d3 &= audio_channel_adk_mask[3]; \
-		PUT_SOUND_WORD (d0+d1+d2+d3) \
+		if (DEFAULT_SOUND_CHANNELS==2){ \
+		PUT_SOUND_WORD (d1+d3) \
+		PUT_SOUND_WORD (d0+d2) \
+		}else{ \
+		PUT_SOUND_WORD (d0+d1+d2+d3)} \
 		CHECK_SOUND_BUFFERS(); \
 	}
 #endif

@@ -15,6 +15,12 @@ extern void finish_sound_buffer (void);
 
 #define DEFAULT_SOUND_BITS 16
 
+#ifdef MAEMO_CHANGES
+#define DEFAULT_SOUND_CHANNELS 2
+#else
+#define DEFAULT_SOUND_CHANNELS 1
+#endif
+
 #ifdef DREAMCAST
 #define DEFAULT_SOUND_FREQ 22050
 #else
