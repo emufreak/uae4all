@@ -7,8 +7,9 @@ uae4all (1rc2-3) fremantle; urgency=low
   * 4 FDDs support.
   * Added PAL/NTSC selector to menu.
   * Additional ARM optimisations.
+  * Added SysInfo and JoyTest disk images to distribution.
 
- -- Tomasz Sterna <tomek@xiaoka.com>  Mon, 19 Apr 2010 15:35:13 +0200
+ -- Tomasz Sterna <tomek@xiaoka.com>  Mon, 19 Apr 2010 15:53:07 +0200
 
 uae4all (1rc2-2) fremantle; urgency=low
 
@@ -24,6 +25,7 @@ uae4all (1rc2-1) fremantle; urgency=low
     * savestates support
     * better sound emulation performance
     * keyboard joystick emulation
+    * 7zip compressed disks support
   * Disabled SDL_DOUBLEBUFFER (it's not needed with scaler enabled)
 
  -- Tomasz Sterna <tomek@xiaoka.com>  Fri, 16 Apr 2010 12:18:29 +0200
