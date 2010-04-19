@@ -169,7 +169,8 @@ static int getFiles(char *dir)
 		struct dirent *actual=readdir(d);
 		if (actual==NULL)
 			break;
-		if ((!strcmp(actual->d_name,"."))||(!strcmp(actual->d_name,"kick.rom"))||
+		if ((*actual->d_name=='.'&&strcmp(actual->d_name,".."))||
+		    (!strcmp(actual->d_name,"kick.rom"))||(!strcmp(actual->d_name,"KICK.ROM"))||
 		    (!strcmp(actual->d_name,"ip.bin"))||(!strcmp(actual->d_name,"1st_read.bin")))
 		{
 			i--;
