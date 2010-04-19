@@ -2,8 +2,13 @@ uae4all (1rc2-3) fremantle; urgency=low
 
   * Fixed ESC key mapping.
   * Implemented stereo sound.
+  * Merged uae4all-wiz 0.8.0 changes.
+  * Using Cyclone for m68k processor emulation.
+  * 4 FDDs support.
+  * Added PAL/NTSC selector to menu.
+  * Additional ARM optimisations.
 
- -- Tomasz Sterna <tomek@xiaoka.com>  Mon, 19 Apr 2010 09:41:08 +0200
+ -- Tomasz Sterna <tomek@xiaoka.com>  Mon, 19 Apr 2010 15:35:13 +0200
 
 uae4all (1rc2-2) fremantle; urgency=low
 
