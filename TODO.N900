@@ -1,7 +1,5 @@
-- Port UAE4All GP2X Cyclone 68k emulator
-
 - Make power and drive LEDs smaller (do not scale)
+  - Use N900 LED as power/drive LED
 - Add exit button in top-right corner
-- Stereo sound
 
 - Write Hildon GUI
