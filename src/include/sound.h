@@ -21,7 +21,7 @@ extern void finish_sound_buffer (void);
 #define DEFAULT_SOUND_CHANNELS 1
 #endif
 
-#ifdef DREAMCAST
+#if defined(NO_THREADS) || defined(WIN32) || defined(DREAMCAST) || defined (GIZMONDO) || defined (PSP)
 #define DEFAULT_SOUND_FREQ 22050
 #else
 #ifdef DINGOO

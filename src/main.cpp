@@ -5,6 +5,13 @@ KOS_INIT_FLAGS(INIT_DEFAULT);
 KOS_INIT_ROMDISK(romdisk);
 #endif
 
+int kickstart=1;
+int oldkickstart=1;
+
+extern char launchDir[300];
+
+extern "C" int main( int argc, char *argv[] );
+
 /*
   * UAE - The Un*x Amiga Emulator
   *
@@ -26,6 +33,7 @@ KOS_INIT_ROMDISK(romdisk);
 #include "events.h"
 #include "memory.h"
 #include "audio.h"
+#include "memory.h"
 #include "sound.h"
 #include "custom.h"
 #include "m68k/m68k_intrf.h"
@@ -42,12 +50,16 @@ KOS_INIT_ROMDISK(romdisk);
 #include "compiler.h"
 #include "bsdsocket.h"
 #include "drawing.h"
+#include "menu.h" 
 
 #ifdef USE_SDL
 #include "SDL.h"
 #endif
 #ifdef DREAMCAST
 #include<SDL_dreamcast.h>
+#endif
+#ifdef GP2X
+#include "gp2xutil.h"
 #endif
 long int version = 256*65536L*UAEMAJOR + 65536L*UAEMINOR + UAESUBREV;
 
@@ -228,6 +240,9 @@ void real_main (int argc, char **argv)
 #endif
     SDL_ShowCursor(SDL_DISABLE);
 
+#ifdef GP2X
+    getcwd(launchDir,250);
+#endif
     default_prefs ();
     
     if (! graphics_setup ()) {
@@ -236,7 +251,7 @@ void real_main (int argc, char **argv)
 
     rtarea_init ();
 
-    machdep_init ();
+   // machdep_init ();
 
     if (! setup_sound ()) {
 	write_log ("Sound driver unavailable: Sound output disabled\n");

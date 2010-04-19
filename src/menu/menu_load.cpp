@@ -25,8 +25,10 @@ typedef struct{
 #define chdir(A) fs_chdir(A)
 #endif
 
-extern char uae4all_image_file[];
+extern char uae4all_image_file0[];
+extern char uae4all_image_file1[];
 extern char uae4all_image_file2[];
+extern char uae4all_image_file3[];
 
 char *text_str_load_separator="----------------------------------";
 char *text_str_load_dir="#DIR#";
@@ -140,7 +142,7 @@ static int getFiles(char *dir)
 	if (text_dir_files!=NULL)
 		free(text_dir_files);
 
-	text_draw_window(96,64,140,32,"-------");
+	text_draw_window(96,55,140,32,"-------");
 	write_text(14,9,"Please wait");
 	text_flip();
 
@@ -388,9 +390,9 @@ static int key_loadMenu(int *c)
 				else
 				{
 					if (hit0)
-						copyCompleteName(uae4all_image_file,text_dir_num_files_index);
+						copyCompleteName(uae4all_image_file0,text_dir_num_files_index);
 					else
-						copyCompleteName(uae4all_image_file2,text_dir_num_files_index);
+						copyCompleteName(uae4all_image_file1,text_dir_num_files_index);
 					end=1;
 				}
 			}

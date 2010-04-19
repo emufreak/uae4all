@@ -374,8 +374,8 @@ int run_menuSave()
 			case SAVE_MENU_CASE_LOAD_MEM:
 //				show_please_wait("Loading");
 				{
-				extern char uae4all_image_file[];
-				strcpy(savestate_filename,uae4all_image_file);
+				extern char uae4all_image_file0[];
+				strcpy(savestate_filename,uae4all_image_file0);
 				switch(saveMenu_n_savestate)
 				{
 					case 1:

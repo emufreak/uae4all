@@ -35,6 +35,9 @@ static char *text_str_auto="auto";
 static char *text_str_sound="Sound";
 static char *text_str_on="on";
 static char *text_str_off="off";
+static char *text_str_video="Video Mode";
+static char *text_str_pal="PAL";
+static char *text_str_ntsc="NTSC";
 static char *text_str_separator="------------------------------";
 static char *text_str_reset="Reset (R)";
 static char *text_str_run="Run (L)";
@@ -84,9 +87,11 @@ int mainMenu_sound=-1;
 #else
 int mainMenu_sound=0;
 #endif
-int mainMenu_autosave=-1;
 
 int mainMenu_case=-1;
+int mainMenu_autosave=DEFAULT_AUTOSAVE;
+int mainMenu_ntsc=DEFAULT_NTSC;
+int mainMenu_autofire=DEFAULT_AUTOFIRE;
 
 enum { MAIN_MENU_CASE_REBOOT, MAIN_MENU_CASE_LOAD, MAIN_MENU_CASE_RUN, MAIN_MENU_CASE_RESET, MAIN_MENU_CASE_CANCEL, MAIN_MENU_CASE_EJECT, MAIN_MENU_CASE_SAVE };
 
@@ -177,39 +182,48 @@ static void draw_mainMenu(int c)
 	else
 		write_text(22,13,text_str_on);
 
-	write_text(6,15,text_str_autosave);
-	if ((!mainMenu_autosave)&&((c!=5)||(bb)))
-		write_text_inv(17,15,text_str_off);
+	write_text(6,15,text_str_video);
+	if ((!mainMenu_ntsc)&&((c!=5)||(bb)))
+		write_text_inv(17,15,text_str_pal);
 	else
-		write_text(17,15,text_str_off);
-	if ((mainMenu_autosave)&&((c!=5)||(bb)))
-		write_text_inv(22,15,text_str_on);
+		write_text(17,15,text_str_pal);
+	if ((mainMenu_ntsc)&&((c!=5)||(bb)))
+		write_text_inv(22,15,text_str_ntsc);
 	else
-		write_text(22,15,text_str_on);
+		write_text(22,15,text_str_ntsc);
 
-	write_text(6,17,text_str_separator);
-	if ((c==6)&&(bb))
-		write_text_inv(6,18,text_str_eject);
+	write_text(6,17,text_str_autosave);
+	if ((!mainMenu_autosave)&&((c!=6)||(bb)))
+		write_text_inv(17,17,text_str_off);
 	else
-		write_text(6,18,text_str_eject);
-	write_text(6,19,text_str_separator);
+		write_text(17,17,text_str_off);
+	if ((mainMenu_autosave)&&((c!=6)||(bb)))
+		write_text_inv(22,17,text_str_on);
+	else
+		write_text(22,17,text_str_on);
 
-	write_text(6,20,text_str_separator);
+	write_text(6,18,text_str_separator);
 	if ((c==7)&&(bb))
-		write_text_inv(6,21,text_str_reset);
+		write_text_inv(6,19,text_str_eject);
 	else
-		write_text(6,21,text_str_reset);
-	write_text(6,22,text_str_separator);
+		write_text(6,19,text_str_eject);
+	write_text(6,20,text_str_separator);
+
+	write_text(6,21,text_str_separator);
+	if ((c==8)&&(bb))
+		write_text_inv(6,22,text_str_reset);
+	else
+		write_text(6,22,text_str_reset);
 
 	write_text(6,23,text_str_separator);
-	if ((c==8)&&(bb))
+	if ((c==9)&&(bb))
 		write_text_inv(6,24,text_str_run);
 	else
 		write_text(6,24,text_str_run);
 	write_text(6,25,text_str_separator);
 
 	write_text(6,26,text_str_separator);
-	if ((c==9)&&(bb))
+	if ((c==10)&&(bb))
 		write_text_inv(6,27,text_str_exit);
 	else
 		write_text(6,27,text_str_exit);
@@ -309,15 +323,15 @@ static int key_mainMenu(int *cp)
 			{
 				back_c=c;
 				hit0=1;
-				c=8;
+				c=9;
 			}
 			else if (up)
 			{
-				if (c>0) c=(c-1)%10;
-				else c=9;
+				if (c>0) c=(c-1)%11;
+				else c=10;
 			}
 			else if (down)
-				c=(c+1)%10;
+				c=(c+1)%11;
 			switch(c)
 			{
 				case 0:
@@ -368,34 +382,38 @@ static int key_mainMenu(int *cp)
 					break;
 				case 4:
 					if ((left)||(right))
-						mainMenu_sound=~mainMenu_sound;
+						mainMenu_sound=!mainMenu_sound;
 					break;
 				case 5:
 					if ((left)||(right))
-						mainMenu_autosave=~mainMenu_autosave;
+						mainMenu_ntsc=!mainMenu_ntsc;
 					break;
 				case 6:
+					if ((left)||(right))
+						mainMenu_autosave=!mainMenu_autosave;
+					break;
+				case 7:
 					if (hit0)
 					{
 						mainMenu_case=MAIN_MENU_CASE_EJECT;
 						end=1;
 					}
 					break;
-				case 7:
+				case 8:
 					if (hit0)
 					{
 						mainMenu_case=MAIN_MENU_CASE_RESET;
 						end=1;
 					}
 					break;
-				case 8:
+				case 9:
 					if (hit0)
 					{
 						mainMenu_case=MAIN_MENU_CASE_RUN;
 						end=1;
 					}
 					break;
-				case 9:
+				case 10:
 					if (hit0)
 					{
 						mainMenu_case=MAIN_MENU_CASE_REBOOT;

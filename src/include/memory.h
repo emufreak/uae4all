@@ -234,8 +234,8 @@ static __inline__ void CHIPMEM_WPUT(unsigned addr,unsigned data)
 #define CHIPMEM_WGET(PT) (*((unsigned short *)&chipmemory[(unsigned)PT]))
 #define CHIPMEM_WPUT(PT,DA) ((*((unsigned short *)&chipmemory[(unsigned)PT]))=DA)
 #else
-#define CHIPMEM_WGET(PT) (*((unsigned short *)&chipmemory[((unsigned)PT)&0x000FFFFF]))
-#define CHIPMEM_WPUT(PT,DA) ((*((unsigned short *)&chipmemory[((unsigned)PT)&0x000FFFFF]))=DA)
+#define CHIPMEM_WGET(PT) (*((unsigned short *)&chipmemory[((unsigned)PT)&~0xfff00000]))
+#define CHIPMEM_WPUT(PT,DA) ((*((unsigned short *)&chipmemory[((unsigned)PT)&~0xfff00000]))=DA)
 #endif
 #endif
 #endif
@@ -324,6 +324,17 @@ static __inline__ void uae4all_memclr(void *_GCCRES_ dest, int n)
 	d = (unsigned int *)0xe0000000;
 	d[0] = d[8] = 0;
 }
+
+#elif defined(GP2X) || defined(GIZMONDO)
+
+extern "C" {
+	void *arm_memset(void *s, int c, size_t n);
+	void *arm_memcpy(void *dest, const void *src, size_t n);
+}
+
+#define uae4all_memclr(p,l) arm_memset(p,0,l)
+#define uae4all_memcpy arm_memcpy
+#define UAE4ALL_ALIGN
 
 #else
 

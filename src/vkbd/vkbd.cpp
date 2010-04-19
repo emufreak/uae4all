@@ -31,6 +31,9 @@ static SDL_Surface *ksur, *kmou, *vkey[MAX_KEY];
 
 static int vkbd_actual=0, vkbd_color=0;
 
+#ifdef GP2X
+extern char launchDir [256];
+#endif
 
 typedef struct{
 	SDL_Rect rect;
@@ -154,7 +157,16 @@ int vkbd_init(void)
 {
 	int i;
 	char tmpchar[256];
+#ifdef GP2X
+	sprintf(tmpchar, "%s/data/vkbd.bmp", launchDir);
+	SDL_Surface *tmp = SDL_LoadBMP(tmpchar);
+#else
+#ifdef GIZMONDO
+	SDL_Surface *tmp = SDL_LoadBMP("\\SD Card\\uae4all\\data\\vkbd.bmp");
+#else
 	SDL_Surface *tmp=SDL_LoadBMP(DATA_PREFIX "vkbd.bmp");
+#endif
+#endif
 	if (tmp==NULL)
 	{
 		printf("Virtual Keyboard Bitmap Error: %s\n",SDL_GetError());
@@ -166,7 +178,15 @@ int vkbd_init(void)
 		vkey[i]=NULL;
 	for(i=0;i<MAX_KEY;i++)
 	{
+#ifdef GP2X
+		sprintf(tmpchar, "%s/data/key%i.bmp", launchDir, i);
+#else
+#ifdef GIZMONDO
+		sprintf(tmpchar, "\\SD Card\\uae4all\\data\\key%i.bmp", i);
+#else
 		sprintf(tmpchar,DATA_PREFIX "key%i.bmp", i);
+#endif
+#endif
 		tmp=SDL_LoadBMP(tmpchar);
 		if (tmp==NULL)
 			break;

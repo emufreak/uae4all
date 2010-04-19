@@ -745,14 +745,18 @@ void check_prefs_changed_audio (void)
 #define IF_SAMPLE \
 	if (!next_sample_evtime) { \
 		next_sample_evtime = scaled_sample_evtime; \
+		if (produce_sound == 2) { \
 		SAMPLE_HANDLER \
+	} \
 	} \
 
 
 #define IF_SAMPLE_AHI \
 	if (!next_sample_evtime) { \
 		next_sample_evtime = scaled_sample_evtime; \
+		if (produce_sound == 2) { \
 		SAMPLE_HANDLER_AHI \
+	} \
 	} \
 
 

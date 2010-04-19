@@ -16,16 +16,7 @@
 // #define STOP_WHEN_COPPER
 #define STOP_WHEN_NASTY
 // #define CUSTOM_PREFETCHS
-
-
-#ifdef USE_FAME_CORE
-#if defined(DREAMCAST) || defined(USE_FAME_CORE_C)
-#define IO_CYCLE io_cycle_counter
-#else
-#define IO_CYCLE __io_cycle_counter
-#endif
-extern signed int IO_CYCLE;
-#endif
+typedef int sprbuf_res_t, cclockres_t, hwres_t,	bplres_t;
 
 #include "sysconfig.h"
 #include "sysdeps.h"
@@ -122,7 +113,7 @@ unsigned long int currcycle, nextevent;
 struct ev eventtab[ev_max];
 
 static int vpos;
-extern int *next_vpos;
+extern int next_vpos[512];
 static uae_u16 lof;
 static int next_lineno;
 static int lof_changed = 0;
@@ -154,7 +145,8 @@ int vblank_endline = VBLANK_ENDLINE_PAL;
 int vblank_hz = VBLANK_HZ_PAL;
 unsigned long syncbase=200000000;
 static int fmode;
-static unsigned int beamcon0, new_beamcon0;
+unsigned int beamcon0 = -1, new_beamcon0;
+extern int mainMenu_ntsc;
 
 #define MAX_SPRITES 8
 
@@ -416,6 +408,166 @@ void notice_new_xcolors (void)
 	docols(color_tables[1]+i);
     }
 }
+
+//////////////////////////////////////////////////////
+static void do_playfield_collisions (void)
+{
+   int bplres = GET_RES (bplcon0);
+    hwres_t ddf_left = thisline_decision.plfleft * 2 << bplres;
+    hwres_t hw_diwlast = coord_window_to_diw_x (thisline_decision.diwlastword);
+    hwres_t hw_diwfirst = coord_window_to_diw_x (thisline_decision.diwfirstword);
+    int i, collided, minpos, maxpos;
+    int planes = 6;
+
+    if (clxcon_bpl_enable == 0) {
+	clxdat |= 1;
+	return;
+    }
+    if (clxdat & 1)
+	{
+	return;
+	}
+    collided = 0;
+    minpos = thisline_decision.plfleft * 2;
+    if (minpos < hw_diwfirst)
+	minpos = hw_diwfirst;
+    maxpos = thisline_decision.plfright * 2;
+    if (maxpos > hw_diwlast)
+	maxpos = hw_diwlast;
+    for (i = minpos; i < maxpos && !collided; i+= 32) {
+	int offs = ((i << bplres) - ddf_left) >> 3;
+	int j;
+	uae_u32 total = 0xffffffff;
+	for (j = 0; j < planes; j++) {
+	    int ena = (clxcon_bpl_enable >> j) & 1;
+	    int match = (clxcon_bpl_match >> j) & 1;
+	    uae_u32 t = 0xffffffff;
+	    if (ena) {
+		if (j < thisline_decision.nr_planes) {
+		    t = *(uae_u32 *)(line_data[next_lineno] + offs + 2 * j * MAX_WORDS_PER_LINE);
+		    t ^= (match & 1) - 1;
+		} else {
+		    t = (match & 1) - 1;
+		}
+	    }
+	    total &= t;
+	}
+	if (total) {
+	    collided = 1;
+#if 0
+	    {
+		int k;
+		for (k = 0; k < 1; k++) {
+		    uae_u32 *ldata = (uae_u32 *)(line_data[next_lineno] + offs + 2 * k * MAX_WORDS_PER_LINE);
+		    *ldata ^= 0x5555555555;
+		}
+	    }
+#endif
+
+	}
+    }
+    if (collided)
+	clxdat |= 1;	
+}
+
+static void do_sprite_collisions (void)
+{
+	
+    int nr_sprites = curr_drawinfo[next_lineno].nr_sprites;
+    int first = curr_drawinfo[next_lineno].first_sprite_entry;
+    int i;
+    unsigned int collision_mask = clxmask[clxcon >> 12];
+    int bplres = GET_RES (bplcon0);
+    hwres_t ddf_left = thisline_decision.plfleft * 2 << bplres;
+    hwres_t hw_diwlast = coord_window_to_diw_x (thisline_decision.diwlastword);
+    hwres_t hw_diwfirst = coord_window_to_diw_x (thisline_decision.diwfirstword);
+
+    if (clxcon_bpl_enable == 0) {
+	clxdat |= 0x1FE;
+	return;
+    }
+
+    for (i = 0; i < nr_sprites; i++) {
+	struct sprite_entry *e = curr_sprite_entries + first + i;
+	sprbuf_res_t j;
+	sprbuf_res_t minpos = e->pos;
+	sprbuf_res_t maxpos = e->max;
+	hwres_t minp1 = minpos >> sprite_buffer_res;
+	hwres_t maxp1 = maxpos >> sprite_buffer_res;
+
+	if (maxp1 > hw_diwlast)
+	    maxpos = hw_diwlast << sprite_buffer_res;
+	if (maxp1 > thisline_decision.plfright * 2)
+	    maxpos = thisline_decision.plfright * 2 << sprite_buffer_res;
+	if (minp1 < hw_diwfirst)
+	    minpos = hw_diwfirst << sprite_buffer_res;
+	if (minp1 < thisline_decision.plfleft * 2)
+	    minpos = thisline_decision.plfleft * 2 << sprite_buffer_res;
+
+	for (j = minpos; j < maxpos; j++) {
+	    int sprpix = spixels[e->first_pixel + j - e->pos] & collision_mask;
+	    int k, offs, match = 1;
+
+	    if (sprpix == 0)
+		continue;
+
+	    offs = ((j << bplres) >> sprite_buffer_res) - ddf_left;
+	    sprpix = sprite_ab_merge[sprpix & 255] | (sprite_ab_merge[sprpix >> 8] << 2);
+	    sprpix <<= 1;
+
+	    /* Loop over number of playfields.  */
+	    for (k = 1; k >= 0; k--) {
+		unsigned int l;
+		unsigned int planes = 6;
+		if (bplcon0 & 0x400)
+		    match = 1;
+		for (l = k; match && l < planes; l += 2) {
+		    unsigned int t = 0;
+		    if (l < thisline_decision.nr_planes) {
+			uae_u32 *ldata = (uae_u32 *)(line_data[next_lineno] + 2 * l * MAX_WORDS_PER_LINE);
+			uae_u32 word = ldata[offs >> 5];
+			t = (word >> (31 - (offs & 31))) & 1;
+#if 0 /* debug: draw collision mask */
+			if (1) {
+			    int m;
+			    for (m = 0; m < 5; m++) {
+				ldata = (uae_u32 *)(line_data[next_lineno] + 2 * m * MAX_WORDS_PER_LINE);
+				ldata[(offs >> 5) + 1] |= 15 << (31 - (offs & 31));
+			    }
+			}
+#endif
+		    }
+		    if (clxcon_bpl_enable & (1 << l)) {
+			if (t != ((clxcon_bpl_match >> l) & 1))
+			    match = 0;
+		    }
+		}
+		if (match) {
+#if 0 /* debug: mark lines where collisions are detected */
+		    if (0) {
+			int l;
+			for (l = 0; l < 5; l++) {
+			    uae_u32 *ldata = (uae_u32 *)(line_data[next_lineno] + 2 * l * MAX_WORDS_PER_LINE);
+			    ldata[(offs >> 5) + 1] |= 15 << (31 - (offs & 31));
+			}
+		    }
+#endif
+		    clxdat |= sprpix << (k * 4);
+		}
+	    }
+	}
+    }
+#if 0
+  {
+	static int olx;
+	if (clxdat != olx)
+	    printf ("%d: %04.4X\n", vpos, clxdat);
+	olx = clxdat;
+    }
+#endif
+
+}
+
 
 static _INLINE_ void do_sprites (int currhp);
 
@@ -1532,7 +1684,8 @@ static _INLINE_ void init_hz (void)
 	vblank_hz = VBLANK_HZ_NTSC;
     }
 
-    write_log ("Using %s timing\n", isntsc ? "NTSC" : "PAL");
+    //write_log ("Using %s timing\n", isntsc ? "NTSC" : "PAL");
+    printf("Using %s timing\n", isntsc ? "NTSC" : "PAL");
 }
 
 static _INLINE_ void calcdiw (void)
@@ -1881,6 +2034,58 @@ static _INLINE_ void DMACON (uae_u16 v, int hpos)
     events_schedule();
 }
 
+
+static _INLINE_ void SET_INTERRUPT(void)
+{
+	int new_irqs = 0, new_level = 0;
+
+	if (intena & 0x4000)
+	{
+		int imask = intreq & intena;
+		if (imask & 0x0007) { new_irqs |= 1 << 1; new_level = 1; }
+		if (imask & 0x0008) { new_irqs |= 1 << 2; new_level = 2; }
+		if (imask & 0x0070) { new_irqs |= 1 << 3; new_level = 3; }
+		if (imask & 0x0780) { new_irqs |= 1 << 4; new_level = 4; }
+		if (imask & 0x1800) { new_irqs |= 1 << 5; new_level = 5; }
+		if (imask & 0x2000) { new_irqs |= 1 << 6; new_level = 6; }
+	}
+
+	if (new_irqs == M68KCONTEXT.interrupts[0]); // nothing changed
+	else if (new_irqs == 0)
+	{
+		M68KCONTEXT.interrupts[0] = 0; // uae4all_go_interrupt = 0;
+		m68k_irq_update(0);
+	}
+	else
+	{
+		int old_irqs = M68KCONTEXT.interrupts[0], old_level = 0, end_timeslice;
+
+		for (old_irqs>>=1; old_irqs; old_irqs>>=1, old_level++);
+		end_timeslice = new_level > old_level && new_level > _68k_intmask;
+
+		M68KCONTEXT.interrupts[0] = new_irqs;
+		m68k_irq_update(end_timeslice);
+		/*
+		if (new_level > old_level && new_level > _68k_intmask)
+		{
+			uae4all_go_interrupt = new_irqs; // delayed interrupt
+			m68k_irq_update(1);
+		}
+		else
+		{
+			M68KCONTEXT.interrupts[0] = new_irqs;
+			uae4all_go_interrupt = 0;
+			m68k_irq_update(0);
+		}
+		*/
+	}
+
+	//printf("%i:%03i ST_IT int req/ena=%04x/%04x,",M68KCONTEXT.cycles_counter,IO_CYCLE,intreq,intena);
+	//printf(" masc=%02x, ints=%02x\n",new_irqs,M68KCONTEXT.interrupts[0]);
+}
+
+
+#if 0
 #if defined(USE_FAME_CORE) && !defined(SPECIAL_DEBUG_INTERRUPTS)
 
 static void __inline__ custom_fame_lower(int n_int)
@@ -1926,8 +2131,8 @@ static void __inline__ custom_fame_raise(int n_int)
 static _INLINE_ void SET_INTERRUPT(void)
 {
     uae4all_prof_start(14);
-#ifdef DEBUG_INTERRUPTS
-    dbgf("SET_INTERRUPT intreq=0x%X, intena=0x%X\n",intreq,intena);
+#ifdef DEBUG_N
+    dbgf("%i|%03i: SET_INTERRUPT intreq=0x%X, intena=0x%X\n",M68KCONTEXT.cycles_counter,IO_CYCLE,intreq,intena);
 #endif
 #if defined(USE_FAME_CORE) || defined(DEBUG_M68K)
     uae_u16 imask = intreq & intena;
@@ -2023,6 +2228,7 @@ static _INLINE_ void SET_INTERRUPT(void)
 					uae4all_go_interrupt=mascara;
 //					m68k_release_timeslice();
 //					if (IO_CYCLE>24)
+//    dbgf("%i|%i: IO_CYCLE\n",M68KCONTEXT.cycles_counter,IO_CYCLE);
 						IO_CYCLE = 24;
 				}
 				else
@@ -2034,6 +2240,7 @@ static _INLINE_ void SET_INTERRUPT(void)
 #endif
     }
  
+    m68k_irq_update();
 
 #if !defined(USE_FAME_CORE) || defined(SPECIAL_DEBUG_INTERRUPTS)
     set_special (SPCFLAG_INT);
@@ -2048,6 +2255,8 @@ static _INLINE_ void SET_INTERRUPT(void)
 #endif
     uae4all_prof_end(14);
 }
+#endif
+
 
 /*static int trace_intena = 0;*/
 
@@ -3287,7 +3496,12 @@ static void hsync_handler (void)
     sync_copper_with_cpu (maxhpos, 0, 0x8A);
 
     finish_decisions ();
- 
+ if (thisline_decision.plfleft != -1) {
+//	if (currprefs.collision_level > 1)
+	    do_sprite_collisions ();
+//	if (currprefs.collision_level > 2)
+	    do_playfield_collisions ();
+   }
     hsync_record_line_state (next_lineno, thisline_changed);
 
     eventtab[ev_hsync].evtime += get_cycles () - eventtab[ev_hsync].oldcycles;
@@ -3488,7 +3702,7 @@ void customreset (void)
     hdiwstate = DIW_waiting_start;
     currcycle = 0;
 
-    new_beamcon0 = 0x20;
+    new_beamcon0 = mainMenu_ntsc ? 0 : 0x20;
     init_hz ();
 
     audio_reset ();

@@ -48,6 +48,12 @@ unsigned long long uae4all_prof_executed[UAE4ALL_PROFILER_MAX];
 #endif
 #endif
 
+#ifdef GP2X
+#include "gp2x.h"
+#include "gp2xutil.h"
+extern int gp2xMouseEmuOn, gp2xButtonRemappingOn;
+#endif
+
 #ifdef DOUBLEBUFFER
 #define VIDEO_FLAGS VIDEO_FLAGS_INIT | SDL_DOUBLEBUF
 #else
@@ -74,12 +80,14 @@ extern int uae4all_keystate[];
 
 int emulated_mouse_speed=4;
 int emulating=0;
-char uae4all_image_file[128];
-char uae4all_image_file2[128];
+char uae4all_image_file0[128]  = { 0, };
+char uae4all_image_file1[128] = { 0, };
+char uae4all_image_file2[128]  = { 0, };
+char uae4all_image_file3[128] = { 0, };
 
 int drawfinished=0;
 
-extern int mainMenu_throttle, mainMenu_frameskip, mainMenu_sound, mainMenu_case, mainMenu_autosave;
+extern int mainMenu_throttle, mainMenu_frameskip, mainMenu_sound, mainMenu_case, mainMenu_autosave, mainMenu_ntsc;
 
 int emulated_left=0;
 int emulated_right=0;
@@ -97,8 +105,21 @@ static void getChanges(void)
 #ifndef NO_SOUND
     if (mainMenu_sound)
     {
+#if defined (GP2X) || defined (PSP) || defined (GIZMONDO)
+		if (mainMenu_sound == 1)
+		{
+			changed_produce_sound=2;
+		}
+		else
+		{
+			// fake it
+			changed_produce_sound=1;
+		}
+	    sound_default_evtime();
+#else
 	    changed_produce_sound=2;
 	    sound_default_evtime();
+#endif
     }
     else
 #endif
@@ -108,6 +129,7 @@ static void getChanges(void)
 
 int gui_init (void)
 {
+	
 //Se ejecuta justo despues del MAIN
     if (prSDLScreen==NULL)
 	prSDLScreen=SDL_SetVideoMode(PREFS_GFX_WIDTH,PREFS_GFX_HEIGHT,16,VIDEO_FLAGS);
@@ -117,18 +139,16 @@ int gui_init (void)
     if (prSDLScreen!=NULL)
     {
 	emulating=0;
-#if !defined(DEBUG_UAE4ALL) && !defined(PROFILER_UAE4ALL) && !defined(AUTO_RUN) && !defined(AUTO_FRAMERATE)
-	uae4all_image_file[0]=0;
-	uae4all_image_file2[0]=0;
-#else
-	strcpy(uae4all_image_file,"prueba.adz");
-	strcpy(uae4all_image_file2,"prueba2.adz");
-#endif
 	vkbd_init();
 	init_text(1);
-	run_mainMenu();
+	if (!uae4all_image_file0[0])
+		run_mainMenu();
 	quit_text();
 	uae4all_pause_music();
+#ifdef GP2X
+	inputmode_init();
+	volumecontrol_init();
+#endif
 	emulating=1;
 	getChanges();
 	check_all_prefs();
@@ -259,9 +279,11 @@ int gui_update (void)
     extern char *savestate_filename;
     extern int saveMenu_n_savestate;
 // SE EJECUTA DESPUES DE INICIAR EL CORE 68k
-    strcpy(changed_df[0],uae4all_image_file);
-    strcpy(changed_df[1],uae4all_image_file2);
-    strcpy(savestate_filename,uae4all_image_file);
+    strcpy(changed_df[0],uae4all_image_file0);
+    strcpy(changed_df[1],uae4all_image_file1);
+    strcpy(changed_df[2],uae4all_image_file2);
+    strcpy(changed_df[3],uae4all_image_file3);
+    strcpy(savestate_filename,uae4all_image_file0);
     switch(saveMenu_n_savestate)
     {
 	    case 1:
@@ -275,6 +297,8 @@ int gui_update (void)
     }
     real_changed_df[0]=1;
     real_changed_df[1]=1;
+    real_changed_df[2]=1;
+    real_changed_df[3]=1;
     show_mhz();
     return 0;
 }
@@ -300,7 +324,7 @@ static void goMenu(void)
    exitmode=run_mainMenu();
    notice_screen_contents_lost();
    resume_sound();
-   if ((!(strcmp(prefs_df[0],uae4all_image_file))) || ((!(strcmp(prefs_df[1],uae4all_image_file2)))))
+   if ((!(strcmp(prefs_df[0],uae4all_image_file0))) || ((!(strcmp(prefs_df[1],uae4all_image_file1)))))
 	   menu_unraise();
    quit_text();
 //   vkbd_init();
@@ -313,17 +337,26 @@ static void goMenu(void)
     {
     	    extern char *savestate_filename;
     	    extern int saveMenu_n_savestate;
-	    if (strcmp(changed_df[0],uae4all_image_file))
+	    for(int i=0;i<NUM_DRIVES;i++)
 	    {
-            strcpy(changed_df[0],uae4all_image_file);
-	    real_changed_df[0]=1;
+		if (i==0 && strcmp(changed_df[0],uae4all_image_file0)) {
+		    strcpy(changed_df[0],uae4all_image_file0);
+		    real_changed_df[0]=1;
+		}
+		else if (i==1 && strcmp(changed_df[1],uae4all_image_file1)) {
+		    strcpy(changed_df[1],uae4all_image_file1);
+		    real_changed_df[1]=1;
+		}
+		else if (i==2 && strcmp(changed_df[2],uae4all_image_file2)) {
+		    strcpy(changed_df[2],uae4all_image_file2);
+		    real_changed_df[2]=1;
+		}
+		else if (i==3 && strcmp(changed_df[3],uae4all_image_file3)) {
+		    strcpy(changed_df[3],uae4all_image_file3);
+		    real_changed_df[3]=1;
+		}
 	    }
-	    if (strcmp(changed_df[1],uae4all_image_file2))
-	    {
-            	strcpy(changed_df[1],uae4all_image_file2);
-	    real_changed_df[1]=1;
-    }
-    	    strcpy(savestate_filename,uae4all_image_file);
+    	    strcpy(savestate_filename,uae4all_image_file0);
 	    switch(saveMenu_n_savestate)
     	    {
 	    	case 1:
@@ -340,16 +373,47 @@ static void goMenu(void)
     {
     	    extern char *savestate_filename;
     	    extern int saveMenu_n_savestate;
-	    changed_df[1][0]=0;
-	    if (strcmp(changed_df[0],uae4all_image_file))
-	    { 
-            	strcpy(changed_df[0],uae4all_image_file);
-	    real_changed_df[0]=1;
+	    for(int i=0;i<NUM_DRIVES;i++)
+	    {
+		changed_df[i][0]=0;
+		if (i==0) {
+		    uae4all_image_file0[0]=0;
+		    if (strcmp(changed_df[0],uae4all_image_file0))
+		    { 
+			strcpy(changed_df[0],uae4all_image_file0);
+			real_changed_df[0]=1;
+		    }
+		}
+		else if (i==1) {
+		    uae4all_image_file1[0]=0;
+		    if (strcmp(changed_df[1],uae4all_image_file1))
+		    { 
+			strcpy(changed_df[1],uae4all_image_file1);
+			real_changed_df[1]=1;
+		    }
+		}
+		else if (i==2) {
+		    uae4all_image_file2[0]=0;
+		    if (strcmp(changed_df[2],uae4all_image_file2))
+		    { 
+			strcpy(changed_df[2],uae4all_image_file2);
+			real_changed_df[2]=1;
+		    }
+		}
+		else if (i==3) {
+		    uae4all_image_file3[0]=0;
+		    if (strcmp(changed_df[3],uae4all_image_file3))
+		    { 
+			strcpy(changed_df[3],uae4all_image_file3);
+			real_changed_df[3]=1;
+		    }
+		}
+		disk_eject(i);
 	    }
-    	    strcpy(savestate_filename,uae4all_image_file);
+    	    strcpy(savestate_filename,uae4all_image_file0);
     	    switch(saveMenu_n_savestate)
     	    {
-	   	 case 1:
+	   	case 1:
     			strcat(savestate_filename,"-1.asf");
 	    	case 2:
     			strcat(savestate_filename,"-2.asf");
@@ -358,8 +422,6 @@ static void goMenu(void)
 	    	default: 
     	  	 	strcat(savestate_filename,".asf");
     	    }
-	    uae4all_image_file2[0]=0;
-	    disk_eject(1);
     }
     if (exitmode==2)
     {
@@ -367,6 +429,8 @@ static void goMenu(void)
 	    {
 	    	prefs_df[0][0]=0;
 	   	prefs_df[1][0]=0;
+	    	prefs_df[2][0]=0;
+	   	prefs_df[3][0]=0;
 	    }
 	    black_screen_now();
 	    show_mhz();
@@ -562,7 +626,16 @@ void gui_handle_events (void)
 #ifdef DINGOO
 		keystate[SDLK_RETURN]=keystate[SDLK_ESCAPE]=keystate[SDLK_TAB]=keystate[SDLK_BACKSPACE]=0;
 #endif
+#ifdef GP2X
+	{
+		// hack: always use SDL_SWSURFACE in menus
+		switch_to_sw_sdl();
 		goMenu();
+		switch_to_hw_sdl(0);
+	}
+#else
+		goMenu();
+#endif
 	}
 #ifdef DINGOO
 	if (keystate[SDLK_RETURN])

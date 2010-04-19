@@ -22,6 +22,9 @@
 #define MAX_COMP_SIZE (1024*128)
 
 extern int mainMenu_autosave;
+#ifdef GP2X
+extern char launchDir[300];
+#endif
 
 #ifdef DREAMCAST
 #include <kos.h>
@@ -223,7 +226,15 @@ static char __uae4all_write_namefile[32];
 static char *get_namefile(unsigned num)
 {
 	unsigned crc=uae4all_disk_crc[num];
+#ifdef GP2X
+	if (!launchDir)
+	{
+		getcwd(launchDir, 250);
+	}
+	sprintf((char *)&__uae4all_write_namefile[0],"%s/saves/%.8X.ads",launchDir, crc);
+#else
 	sprintf((char *)&__uae4all_write_namefile[0],SAVE_PREFIX "%.8X.ads",crc);
+#endif
 	return (char *)&__uae4all_write_namefile[0];
 }
 
@@ -241,6 +252,7 @@ static void uae4all_disk_real_write(int num)
 			char *namefile=get_namefile(num);
 			void *bc=calloc(1,MAX_COMP_SIZE);
 			unsigned long sizecompressed=MAX_COMP_SIZE;
+			//int compress2(Bytef * dest, uLongf * destLen, const Bytef * source, uLong sourceLen, int level);
 			int retc=compress2((Bytef *)bc,&sizecompressed,(const Bytef *)uae4all_extra_buffer,changed,Z_BEST_COMPRESSION);
 			if (retc>=0)
 			{
@@ -270,6 +282,9 @@ static void uae4all_disk_real_write(int num)
 			}
 			free(bc);
 			uae4all_disk_actual_crc[num]=new_crc;
+#ifdef GP2X
+			sync();
+#endif
 		}
 	}
 }
@@ -337,12 +352,12 @@ FILE *zfile_open (const char *name, const char *mode)
 #ifndef DREAMCAST
 		uae4all_extra_buffer=malloc(MAX_DISK_LEN);
 #else
-		uae4all_extra_buffer=(void *)(DC_VRAM+(MAX_DISK_LEN*(NUM_DRIVES+1)));
+		uae4all_extra_buffer=(void *)(DC_VRAM+(MAX_DISK_LEN*(4+1)));
 #endif
     for(i=0;i<NUM_DRIVES;i++)
 	if (!uae4all_disk_used[i])
 		break;
-    if (i>=NUM_DRIVES)
+    if (i>=4)
 	return NULL;
 
     if (try_to_read_disk(i,name))
@@ -431,9 +446,11 @@ int uae4all_init_rom(const char *name)
 	FILE *f=fopen(name,"rb");
 	if (f)
 	{
+		printf("Open kick %s\n",name);
 #ifndef DREAMCAST
 		uae4all_rom_memory=calloc(1,MAX_ROM_LEN);
 #else
+		if (uae4all_rom_memory) free(uae4all_rom_memory);
 		uae4all_rom_memory=(void *)(DC_VRAM+VRAM_MAX_LEN);
 		bzero(uae4all_rom_memory,MAX_ROM_LEN);
 #endif
@@ -447,6 +464,7 @@ int uae4all_init_rom(const char *name)
 		fclose(f);
 		return 0;
 	}
+	printf("Kick %s not open\n",name);
 	return -1;
 }
 

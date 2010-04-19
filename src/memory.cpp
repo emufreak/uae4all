@@ -21,7 +21,11 @@
 #include "autoconf.h"
 #include "savestate.h"
 
+int bReloadKickstart = 0;
+
 #include "zfile.h"
+
+int useOneMegaChip = 1;
 
 unsigned prefs_chipmem_size;
 
@@ -1117,7 +1121,8 @@ static void init_mem_banks (void)
 
 static void allocate_memory (void)
 {
-    if (allocated_chipmem != prefs_chipmem_size) {
+	if (allocated_chipmem != prefs_chipmem_size) 
+	{
 	if (chipmemory)
 	    mapped_free (chipmemory);
 	chipmemory = 0;
@@ -1130,8 +1135,8 @@ static void allocate_memory (void)
 	if (chipmemory == 0) {
 	    write_log ("Fatal error: out of memory for chipmem.\n");
 	    allocated_chipmem = 0;
-	} else
-	    do_put_mem_long ((uae_u32 *)(chipmemory + 4), swab_l(0));
+		}	 
+		else do_put_mem_long ((uae_u32 *)(chipmemory + 4), swab_l(0));
     }
 
     if (savestate_state == STATE_RESTORE)
@@ -1179,7 +1184,8 @@ static void reload_kickstart(void)
 void memory_reset (void)
 {
     int i, custom_start;
-
+	if (useOneMegaChip) prefs_chipmem_size=0x00100000;
+	else prefs_chipmem_size=0x00100000>>1;	
 #ifdef DEBUG_MEMORY
     dbg("memory_reset!");
 #endif
@@ -1280,8 +1286,9 @@ void memory_reset (void)
 	    map_banks (&kickmem_bank, 0xE0, 8, 0);
 	}
     }
-    if (kickmem_checksum!=get_kickmem_checksum())
+    if (kickmem_checksum!=get_kickmem_checksum() | bReloadKickstart)
     {
+		bReloadKickstart=0;
 	unsigned chksum=kickmem_checksum;
 	reload_kickstart();
 	if (chksum!=kickmem_checksum)

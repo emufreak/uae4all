@@ -16,7 +16,7 @@
 #define FAMEC_ROLL_INLINE
 #define FAMEC_EMULATE_TRACE
 #define FAMEC_IRQ_CYCLES
-#define FAMEC_CHECK_BRANCHES
+//#define FAMEC_CHECK_BRANCHES
 #define FAMEC_USE_DATA_BANKS
 // #define FAMEC_EXTRA_INLINE
 // #define FAMEC_DEBUG
@@ -25,10 +25,18 @@
 #define FAMEC_FETCHBITS 8
 #define FAMEC_DATABITS  8
 
-// #define USE_CYCLONE_TIMING
-// #define USE_CYCLONE_TIMING_DIV
+#define USE_CYCLONE_TIMING
+#define USE_CYCLONE_TIMING_DIV
 // Options //
 
+//#define dprintf(f,...) \
+printf("%05i|%03i: %06x: %s: " f "\n",m68kcontext.cycles_counter,io_cycle_counter+cycles_needed,(u32)PC - BasePC,__FUNCTION__,##__VA_ARGS__)
+#define dprintf(...)
+#define mdprintf(f,...) \
+if (verb) \
+printf("%05i|%03i: %06x: %s: " f "\n",m68kcontext.cycles_counter,io_cycle_counter+cycles_needed,(u32)PC - BasePC,__FUNCTION__,##__VA_ARGS__)
+//#define mdprintf(...)
+#define dprintf_al(f,...) printf("%05i|%03i: %s: " f "\n",m68kcontext.cycles_counter,io_cycle_counter+cycles_needed,__FUNCTION__,##__VA_ARGS__)
 
 #undef INLINE
 #ifndef INLINE
@@ -81,6 +89,7 @@ typedef unsigned int	u32;
 typedef signed int	s32;
 */
 
+int verb=0;
 #ifdef FAMEC_EMULATE_TRACE
 static u32 flag_T;
 #endif
@@ -378,10 +387,14 @@ typedef struct
 #else
 
 #define NEXT \
-    do{ \
+    /*do*/ \
+    while(io_cycle_counter>0) \
+    { \
+	/*dprintf_al("%06x",(u32)PC - BasePC);*/\
     	FETCH_WORD(Opcode); \
     	JumpTable[Opcode](); \
-    }while(io_cycle_counter>0); 
+    } \
+    ;
 
 #define RET(A) \
     io_cycle_counter -= (A);  \
@@ -397,7 +410,8 @@ typedef struct
 #define SET_PC(A)               \
     BasePC = Fetch[((A) >> M68K_FETCHSFT) & M68K_FETCHMASK];    \
    /*  BasePC -= (A) & 0xFF000000; */   \
-    PC = (u16*)(((A) & M68K_ADR_MASK) + BasePC); 
+    PC = (u16*)(((A) & M68K_ADR_MASK) + BasePC);
+//    printf("check_pc: newpc=%06x, base=0x%08x, result=%08x\n",A,BasePC,PC);
 
 #define SET_PC_BASE(P,B,A)               \
     (B) = Fetch[((A) >> M68K_FETCHSFT) & M68K_FETCHMASK];    \
@@ -950,6 +964,7 @@ static FAMEC_EXTRA_INLINE u32 Read_Byte(u32 addr)
 	else
 		val = *((u8 *)(((u32)DataRB[i].data) + (addr^1)));
 
+	mdprintf("@ %06x, =%02x", addr, val);
 #ifdef FAMEC_DEBUG
 	printf("Reading 0x%08X = 0x%04X...\n",addr,val);
 #endif
@@ -963,6 +978,7 @@ static FAMEC_EXTRA_INLINE u32 Read_Word(u32 addr)
 	s32 val;
 
 	addr&=M68K_ADR_MASK;
+	addr&=~1;
 #ifdef FAMEC_DEBUG
 	printf("Reading from addr = 0x%08X\n",addr);
 #endif
@@ -982,6 +998,7 @@ static FAMEC_EXTRA_INLINE u32 Read_Word(u32 addr)
 	else
 		val = *((u16 *)(((u32)DataRW[i].data) + addr));
 
+	mdprintf("@ %06x, =%04x", addr, val);
 #ifdef FAMEC_DEBUG
 	printf("Reading 0x%08X = 0x%04X...\n",addr,val);
 #endif
@@ -1006,6 +1023,7 @@ static FAMEC_EXTRA_INLINE void Write_Byte(u32 addr, u32 data)
 #ifdef FAMEC_DEBUG
 	printf("Writing byte 0x%08X = 0x%04X...\n",addr,data);
 #endif
+	mdprintf("@ %06x, =%02x", addr, data);
 	
 #ifndef FAMEC_USE_DATA_BANKS
 	while ( ((m68kcontext.write_byte[i].low_addr > addr) || (m68kcontext.write_byte[i].high_addr < addr)) && (m68kcontext.write_byte[i].low_addr != -1) )
@@ -1028,9 +1046,11 @@ static FAMEC_EXTRA_INLINE void Write_Word(u32 addr, u32 data)
 	u32 i=0;
 
 	addr&=M68K_ADR_MASK;
+	addr&=~1;
 #ifdef FAMEC_DEBUG
 	printf("Writing 0x%08X = 0x%04X...\n",addr,data);
 #endif
+	mdprintf("@ %06x, =%04x", addr, data);
 	
 #ifndef FAMEC_USE_DATA_BANKS
 	while ( ((m68kcontext.write_word[i].low_addr > addr) || (m68kcontext.write_word[i].high_addr < addr)) && (m68kcontext.write_word[i].low_addr != -1) )
@@ -1155,6 +1175,8 @@ s32 m68k_raise_irq(s32 level, s32 vector)
 	/* Enmascarar nivel de interrupcion */
 	level &=7;
 
+	dprintf("");
+
 	/* Nivel de interrupcion = 0 no es valido */
 	if (!level) return M68K_IRQ_INV_PARAMS;
 
@@ -1171,6 +1193,8 @@ s32 m68k_raise_irq(s32 level, s32 vector)
 	/* Dar de alta la interrupcion en interrupts */
 	m68kcontext.interrupts[0] |= (1 << level);
 	
+	dprintf("lvl: %i, irqs: %02x", level, m68kcontext.interrupts[0]);
+
 	switch(vector)
 	{
 		case M68K_SPURIOUS_IRQ:
@@ -1217,6 +1241,8 @@ s32 m68k_lower_irq(s32 level)
 	/* Enmascarar nivel de interrupcion */
 	level &=7;
 
+	dprintf("");
+
 	/* Nivel de interrupcion = 0 no es valido */
 	if (!level) return M68K_IRQ_INV_PARAMS;
 
@@ -1234,8 +1260,9 @@ s32 m68k_lower_irq(s32 level)
 	}
 	else
 	{
-		return M68K_IRQ_LEVEL_ERROR;
+//		return M68K_IRQ_LEVEL_ERROR;
 	}
+	dprintf("lvl: %i, irqs: %02x", level, m68kcontext.interrupts[0]);
 
     return M68K_OK;
 }
@@ -1723,6 +1750,9 @@ static u32 Opcode;
 #endif
 
 
+int trace_seen=0;
+int irq_cnt=0;
+
 // main exec function
 //////////////////////
 
@@ -1742,6 +1772,7 @@ u32 m68k_emulate(s32 cycles)
 	/* Comprobar si la CPU esta detenida debido a un doble error de bus */
 	if (m68kcontext.execinfo & M68K_FAULTED) return (u32)-1;
 	
+	/* Comprobar si la CPU esta parada */
 	if (m68kcontext.execinfo & M68K_HALTED)
 	{
 		if (interrupt_chk__() <= 0)
@@ -1749,11 +1780,11 @@ u32 m68k_emulate(s32 cycles)
 			/* La CPU esta detenida mediante la instruccion STOP */
 			/* Agregar ciclos de reloj requeridos */
 			m68kcontext.cycles_counter += cycles;
+			dprintf("c = %i, stoped: %i, irq: %02x", cycles, 1, m68kcontext.interrupts[0]);
 			return 0;
 		}
 		m68kcontext.execinfo &= ~M68K_HALTED;
 	} 
-
 
 #ifdef FAMEC_DEBUG
 	printf("Ciclos a ejecutar: %d\n",cycles);
@@ -1780,6 +1811,8 @@ u32 m68k_emulate(s32 cycles)
 	io_cycle_counter = cycles;
 	cycles_needed = 0;
 
+again:
+
 #ifdef FAMEC_EMULATE_TRACE
 	if (!(m68kcontext.execinfo & M68K_EMULATE_TRACE))
 #endif
@@ -1791,11 +1824,34 @@ u32 m68k_emulate(s32 cycles)
 			m68kcontext.interrupts[0] &= ~(1 << ((u32)line));
 
 			/* comprobar si hay rutina de acknowledge */
+			dprintf_al("[1] level: %i, irqs: %02x", line, m68kcontext.interrupts[0]);
 			if (m68kcontext.iack_handler != NULL)
 				m68kcontext.iack_handler(line);
 
 			execute_exception(m68kcontext.interrupts[(u32)line]);
 			flag_I = (u32)line;
+
+			// rm...
+#if 0
+			if (trace_seen) irq_cnt++;
+			if (irq_cnt >= 224)
+			{
+				static int dumped=0;
+				if (!dumped) {
+					extern u8* baseaddr[];
+					dumped++;
+					FILE *f = fopen("00000.bin", "wb");
+					u8 *p = (u8 *) baseaddr[0x00000>>16];
+					fwrite(p+0x00000, 1, 0x20000, f);
+					fclose(f);
+					f = fopen("80000.bin", "wb");
+					p = (u8 *) baseaddr[0x80000>>16];
+					fwrite(p+0x80000, 1, 0x40000, f);
+					fclose(f);
+				}
+				verb=1;
+			}
+#endif
 		}
 #ifdef FAMEC_EMULATE_TRACE
 		else
@@ -1803,7 +1859,9 @@ u32 m68k_emulate(s32 cycles)
 		{
 			m68kcontext.execinfo |= M68K_EMULATE_TRACE;
 			cycles_needed= io_cycle_counter;
-			io_cycle_counter=0;	
+			io_cycle_counter=1;
+			trace_seen++;
+			irq_cnt=0;
 		}
 #endif
 	}
@@ -1831,26 +1889,45 @@ famec_Exec_End:
 #ifdef FAMEC_EMULATE_TRACE
 	if (m68kcontext.execinfo & M68K_EMULATE_TRACE)
 	{
-		io_cycle_counter= cycles_needed;
+		int pc = GET_PC;
+		io_cycle_counter += cycles_needed - 1; // ??
+		cycles_needed=0;
 		m68kcontext.execinfo &= ~M68K_EMULATE_TRACE;
 		m68kcontext.execinfo |= M68K_DO_TRACE;
+		dprintf_al("trace ex @ %06x", pc);
+		//verb = 1;
 		execute_exception(M68K_TRACE_EX);
 		flag_T=0;
 		if (io_cycle_counter > 0)
 		{
+#if 1 // test..
+			goto again;
+#else
 			NEXT
+#endif
 		}
 	}
     	else
 #endif
 	if (cycles_needed>0)
+#if 1 // test..
+	{
+		io_cycle_counter= cycles_needed;
+		cycles_needed=0;
+		goto again;
+	}
+
+#else
+//	if (cycles_needed!=0) // test
 	{
 		s32 line=interrupt_chk__();
 		io_cycle_counter= cycles_needed;
+		cycles_needed=0;
 		if (line>0)
 		{
        		 	/* Desactivar interrupcion */
 			m68kcontext.interrupts[0] &= ~(1 << ((u32)line));
+			dprintf_al("[2] level: %i, irqs: %02x", line, m68kcontext.interrupts[0]);
 
 			/* comprobar si hay rutina de acknowledge */
 			if (m68kcontext.iack_handler != NULL)
@@ -1868,6 +1945,7 @@ famec_Exec_End:
 			NEXT
 		}
 	}
+#endif
 
 	m68kcontext.sr = GET_SR;
 	m68kcontext.pc = GET_PC;

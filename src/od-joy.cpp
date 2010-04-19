@@ -18,15 +18,52 @@
 #include "custom.h"
 #include "joystick.h"
 #include "SDL.h"
+#include "menu.h"
 
 #include "vkbd.h"
+
+#ifdef GP2X
+#include "gp2x.h"
+#include "xwin.h"
+extern int gp2xMouseEmuOn;
+extern int mainMenu_mouseMultiplier;
+extern int mainMenu_joyConf;
+extern int mainMenu_button1;
+extern int mainMenu_button2;
+extern int mainMenu_jump;
+extern int mainMenu_autofire;
+extern int mainMenu_enableScreenshots;
+extern int mainMenu_enableScripts;
+extern char launchDir[300];
+extern int showmsg;
+bool switch_autofire=false;
+int delay=0;
+int delay1=0;
+#endif
+
+
+#ifdef PSP
+#include "psp.h"
+#include "xwin.h"
+extern int gp2xMouseEmuOn;
+// XXX fix this properly
+int mainMenu_mouseMultiplier = 1;
+#endif
+
+#ifdef GIZMONDO
+#include "gizmondo.h"
+#include "xwin.h"
+extern int gp2xMouseEmuOn;
+extern int mainMenu_mouseMultiplier;
+#endif
+
 
 int nr_joysticks;
 
 SDL_Joystick *uae4all_joy0, *uae4all_joy1;
+extern SDL_Surface *prSDLScreen;
 
-
-#ifndef DREAMCAST
+#if !defined (DREAMCAST) && !defined (GP2X) && !defined (GIZMONDO)
 struct joy_range
 {
     int minx, maxx, miny, maxy;
@@ -47,7 +84,7 @@ void read_joystick(int nr, unsigned int *dir, int *button)
     nr = (~nr)&0x1;
 
     SDL_JoystickUpdate ();
-#ifndef DREAMCAST
+#if !defined (DREAMCAST) && !defined (GP2X) && !defined (GIZMONDO) && !defined (PSP)
     struct joy_range *r = nr == 0 ? &range0 : &range1;
     x_axis = SDL_JoystickGetAxis (joy, 0);
     y_axis = SDL_JoystickGetAxis (joy, 1);
@@ -91,6 +128,7 @@ void read_joystick(int nr, unsigned int *dir, int *button)
 #endif
     }
 #else
+#ifdef DREAMCAST
     int hat=15^(SDL_JoystickGetHat(joy,0));
     if (hat & SDL_HAT_LEFT)
 	    left = 1;
@@ -162,6 +200,7 @@ void read_joystick(int nr, unsigned int *dir, int *button)
     	*dir = bot | (right << 1) | (top << 8) | (left << 9);
     }
 #endif
+#endif
 }
 
 void init_joystick(void)
@@ -174,7 +213,7 @@ void init_joystick(void)
 	uae4all_joy1 = SDL_JoystickOpen (1);
     else
 	uae4all_joy1 = NULL;
-#ifndef DREAMCAST
+#if !defined (DREAMCAST) && !defined (GP2X) && !defined (GIZMONDO)
     range0.minx = INT_MAX;
     range0.maxx = INT_MIN;
     range0.miny = INT_MAX;

@@ -34,6 +34,7 @@
 #include "osemu.h"
 #include "execlib.h"
 #include "savestate.h"
+#include "menu.h"
 
 #define maxhpos MAXHPOS
 
@@ -120,7 +121,7 @@ typedef struct {
     char newname[256]; /* storage space for new filename during eject delay */
 } drive;
 
-static drive floppy[NUM_DRIVES];
+static drive floppy[4];
 
 /* Keeps track of whether the Amiga program seems to be using the data coming
    in from the disk; if this remains 0 for several seconds, we stop calling
@@ -793,6 +794,7 @@ void disk_eject (int num)
     {
 	drive_eject (floppy + num);
 	prefs_df[num][0] = changed_df[num][0] = 0;
+		//prefs_drives[num].name[0] = prefs_drives[num].changed = 0;
 	floppy[num].newname[0] = 0;
     }
 }
@@ -1537,24 +1539,42 @@ uae_u8 *restore_disk(int num,uae_u8 *src)
     	changed_df[num][127] = 0;
 	{
 		FILE *f=fopen(changed_df[num],"rb");
-		extern char uae4all_image_file[128];
+		extern char uae4all_image_file0[128];
+		extern char uae4all_image_file1[128];
 		extern char uae4all_image_file2[128];
+		extern char uae4all_image_file3[128];
 		if (f)
 		{
 			fclose(f);
-			if (!num)
+			if (num==0)
 			{
-				if (strcmp(uae4all_image_file,changed_df[0]))
+				if (strcmp(uae4all_image_file0,changed_df[0]))
 				{
-    					strcpy(uae4all_image_file,changed_df[0]);
+    					strcpy(uae4all_image_file0,changed_df[0]);
 					real_changed_df[num] = 1;
 				}
 			}
- 			else
+ 			else if (num==1)
 			{
-				if (strcmp(uae4all_image_file2,changed_df[1]))
+				if (strcmp(uae4all_image_file1,changed_df[1]))
 				{
-					strcpy(uae4all_image_file2,changed_df[1]);
+					strcpy(uae4all_image_file1,changed_df[1]);
+					real_changed_df[num] = 1;
+				}
+			}
+ 			else if (num==2)
+			{
+				if (strcmp(uae4all_image_file2,changed_df[2]))
+				{
+					strcpy(uae4all_image_file2,changed_df[2]);
+					real_changed_df[num] = 1;
+				}
+			}
+ 			else if (num==3)
+			{
+				if (strcmp(uae4all_image_file3,changed_df[3]))
+				{
+					strcpy(uae4all_image_file3,changed_df[3]);
 					real_changed_df[num] = 1;
 				}
 			}
