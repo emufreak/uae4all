@@ -435,7 +435,9 @@ int uae4all_init_rom(const char *name)
 	FILE *f=fopen(name,"rb");
 	if (f)
 	{
+#ifdef DEBUG_UAE4ALL
 		printf("Open kick %s\n",name);
+#endif
 #ifndef DREAMCAST
 		uae4all_rom_memory=calloc(1,MAX_ROM_LEN);
 #else
@@ -453,7 +455,9 @@ int uae4all_init_rom(const char *name)
 		fclose(f);
 		return 0;
 	}
+#ifdef DEBUG_UAE4ALL
 	printf("Kick %s not open\n",name);
+#endif
 	return -1;
 }
 

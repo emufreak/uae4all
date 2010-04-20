@@ -313,7 +313,11 @@ void init_text(int splash)
 
 			text_draw_background();
 			text_draw_window(54,110,250,64,"--- ERROR ---");
+#ifdef MAEMO_CHANGES
+			write_text(8,14,"MyDocs/KICK.ROM not found");
+#else
 			write_text(11,14,"KICK.ROM not found");
+#endif
 			write_text(8,16,"Press any button to retry");
 			text_flip();
 			SDL_Delay(333);
