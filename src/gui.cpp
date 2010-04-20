@@ -48,12 +48,6 @@ unsigned long long uae4all_prof_executed[UAE4ALL_PROFILER_MAX];
 #endif
 #endif
 
-#ifdef GP2X
-#include "gp2x.h"
-#include "gp2xutil.h"
-extern int gp2xMouseEmuOn, gp2xButtonRemappingOn;
-#endif
-
 #ifdef DOUBLEBUFFER
 #define VIDEO_FLAGS VIDEO_FLAGS_INIT | SDL_DOUBLEBUF
 #else
@@ -105,25 +99,20 @@ static void getChanges(void)
 #ifndef NO_SOUND
     if (mainMenu_sound)
     {
-#if defined (GP2X) || defined (PSP) || defined (GIZMONDO)
-		if (mainMenu_sound == 1)
-		{
-			changed_produce_sound=2;
-		}
-		else
-		{
-			// fake it
-			changed_produce_sound=1;
-		}
-	    sound_default_evtime();
-#else
-	    changed_produce_sound=2;
-	    sound_default_evtime();
-#endif
+	if (mainMenu_sound == 1)
+	{
+		changed_produce_sound=2;
+	}
+	else
+	{
+		// fake it
+		changed_produce_sound=1;
+	}
+	sound_default_evtime();
     }
     else
 #endif
-	    changed_produce_sound=0;
+	changed_produce_sound=0;
     changed_gfx_framerate=mainMenu_frameskip;
 }
 
@@ -145,10 +134,6 @@ int gui_init (void)
 		run_mainMenu();
 	quit_text();
 	uae4all_pause_music();
-#ifdef GP2X
-	inputmode_init();
-	volumecontrol_init();
-#endif
 	emulating=1;
 	getChanges();
 	check_all_prefs();
@@ -626,16 +611,7 @@ void gui_handle_events (void)
 #ifdef DINGOO
 		keystate[SDLK_RETURN]=keystate[SDLK_ESCAPE]=keystate[SDLK_TAB]=keystate[SDLK_BACKSPACE]=0;
 #endif
-#ifdef GP2X
-	{
-		// hack: always use SDL_SWSURFACE in menus
-		switch_to_sw_sdl();
 		goMenu();
-		switch_to_hw_sdl(0);
-	}
-#else
-		goMenu();
-#endif
 	}
 #ifdef DINGOO
 	if (keystate[SDLK_RETURN])

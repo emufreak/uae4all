@@ -22,9 +22,6 @@
 #define MAX_COMP_SIZE (1024*128)
 
 extern int mainMenu_autosave;
-#ifdef GP2X
-extern char launchDir[300];
-#endif
 
 #ifdef DREAMCAST
 #include <kos.h>
@@ -226,15 +223,7 @@ static char __uae4all_write_namefile[32];
 static char *get_namefile(unsigned num)
 {
 	unsigned crc=uae4all_disk_crc[num];
-#ifdef GP2X
-	if (!launchDir)
-	{
-		getcwd(launchDir, 250);
-	}
-	sprintf((char *)&__uae4all_write_namefile[0],"%s/saves/%.8X.ads",launchDir, crc);
-#else
 	sprintf((char *)&__uae4all_write_namefile[0],SAVE_PREFIX "%.8X.ads",crc);
-#endif
 	return (char *)&__uae4all_write_namefile[0];
 }
 
@@ -282,7 +271,7 @@ static void uae4all_disk_real_write(int num)
 			}
 			free(bc);
 			uae4all_disk_actual_crc[num]=new_crc;
-#if defined(GP2X) || defined(MAEMO_CHANGES)
+#ifdef MAEMO_CHANGES
 			sync();
 #endif
 		}

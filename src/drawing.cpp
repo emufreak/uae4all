@@ -2113,31 +2113,6 @@ static _INLINE_ void draw_status_line (int line)
 	    write_tdnumber (x + offs, y - TD_PADY, fps_counter / 10);
 	    write_tdnumber (x + offs + TD_NUM_WIDTH, y - TD_PADY, fps_counter % 10);
 	}
-#ifdef GP2X
-	if (showmsg)
-	{
-		if (delay<100)
-		{
-			x=0;
-			char *string=statusmessages[showmsg-1];
-			y = line - (GFXVIDINFO_HEIGHT - TD_TOTAL_HEIGHT);
-			if (y >= TD_PADY && y - TD_PADY < TD_NUM_HEIGHT) 
-			{
-				while(*string!='\0') 
-				{
-					if (*string!=' ')write_tdletter(x,y - TD_PADY,*string);
-					string++;
-					x += 8;
-				}
-			}
-		}
-		else
-		{
-			delay=0;
-			showmsg=0;
-		}
-	}
-#endif
 }
 
 void check_all_prefs(void)
@@ -2197,21 +2172,15 @@ static _INLINE_ void finish_drawing_frame (void)
 
 	i1 = i + min_ypos_for_screen;
 	where = amiga2aspect_line_map[i1];
-#if defined (GP2X) || defined (GIZMONDO) || defined (PSP) || defined(MAEMO_CHANGES)
 	if (where >= GFXVIDINFO_HEIGHT - ((showStatus) ? TD_TOTAL_HEIGHT : 0))
-#else
-	if (where >= GFXVIDINFO_HEIGHT - TD_TOTAL_HEIGHT)
-#endif
 	    break;
 	if (where == -1)
 	    continue;
 	pfield_draw_line (line, where, amiga2aspect_line_map[i1 + 1]);
     }
-#if defined (GP2X) || defined (PSP) || defined (GIZMONDO) || defined(MAEMO_CHANGES)
-	if (showStatus)
-	{
-#endif
-    if (   (frame_redraw_necessary) || fps_counter_changed
+    if (showStatus)
+    {
+	if (   (frame_redraw_necessary) || fps_counter_changed
 	|| (back_drive_track0!=gui_data.drive_track[0])
 	|| (back_drive_motor0!=gui_data.drive_motor[0])
 	|| (back_drive_track1!=gui_data.drive_track[1])
@@ -2221,31 +2190,25 @@ static _INLINE_ void finish_drawing_frame (void)
 	|| (back_drive_track3!=gui_data.drive_track[3])
 	|| (back_drive_motor3!=gui_data.drive_motor[3])
 	|| (back_powerled!=gui_data.powerled)	)
-    {
-	back_drive_track0=gui_data.drive_track[0];
-	back_drive_motor0=gui_data.drive_motor[0];
-	back_drive_track1=gui_data.drive_track[1];
-	back_drive_motor1=gui_data.drive_motor[1];
-	back_drive_track2=gui_data.drive_track[2];
-	back_drive_motor2=gui_data.drive_motor[2];
-	back_drive_track3=gui_data.drive_track[3];
-	back_drive_motor3=gui_data.drive_motor[3];
-	back_powerled=gui_data.powerled;
- 	for (i = 0; i < TD_TOTAL_HEIGHT; i++) {
-		int line = GFXVIDINFO_HEIGHT - TD_TOTAL_HEIGHT + i;
-		draw_status_line (line);
-		do_flush_line (line);
-    	}
-    }
-	
-#if defined (GP2X) || defined (PSP) || defined (GIZMONDO) || defined(MAEMO_CHANGES)
+	{
+		back_drive_track0=gui_data.drive_track[0];
+		back_drive_motor0=gui_data.drive_motor[0];
+		back_drive_track1=gui_data.drive_track[1];
+		back_drive_motor1=gui_data.drive_motor[1];
+		back_drive_track2=gui_data.drive_track[2];
+		back_drive_motor2=gui_data.drive_motor[2];
+		back_drive_track3=gui_data.drive_track[3];
+		back_drive_motor3=gui_data.drive_motor[3];
+		back_powerled=gui_data.powerled;
+	 	for (i = 0; i < TD_TOTAL_HEIGHT; i++) {
+			int line = GFXVIDINFO_HEIGHT - TD_TOTAL_HEIGHT + i;
+			draw_status_line (line);
+			do_flush_line (line);
+    		}
 	}
-#endif
+    }	
     drawfinished=1;
     do_flush_screen (first_drawn_line, last_drawn_line);
-#if defined (GP2X)
-    if (showmsg) delay++;
-#endif
 }
 
 

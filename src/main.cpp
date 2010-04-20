@@ -58,9 +58,6 @@ extern "C" int main( int argc, char *argv[] );
 #ifdef DREAMCAST
 #include<SDL_dreamcast.h>
 #endif
-#ifdef GP2X
-#include "gp2xutil.h"
-#endif
 long int version = 256*65536L*UAEMAJOR + 65536L*UAEMINOR + UAESUBREV;
 
 int no_gui = 0;
@@ -240,9 +237,6 @@ void real_main (int argc, char **argv)
 #endif
     SDL_ShowCursor(SDL_DISABLE);
 
-#ifdef GP2X
-    getcwd(launchDir,250);
-#endif
     default_prefs ();
     
     if (! graphics_setup ()) {

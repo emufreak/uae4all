@@ -22,42 +22,6 @@
 
 #include "vkbd.h"
 
-#ifdef GP2X
-#include "gp2x.h"
-#include "xwin.h"
-extern int gp2xMouseEmuOn;
-extern int mainMenu_mouseMultiplier;
-extern int mainMenu_joyConf;
-extern int mainMenu_button1;
-extern int mainMenu_button2;
-extern int mainMenu_jump;
-extern int mainMenu_autofire;
-extern int mainMenu_enableScreenshots;
-extern int mainMenu_enableScripts;
-extern char launchDir[300];
-extern int showmsg;
-bool switch_autofire=false;
-int delay=0;
-int delay1=0;
-#endif
-
-
-#ifdef PSP
-#include "psp.h"
-#include "xwin.h"
-extern int gp2xMouseEmuOn;
-// XXX fix this properly
-int mainMenu_mouseMultiplier = 1;
-#endif
-
-#ifdef GIZMONDO
-#include "gizmondo.h"
-#include "xwin.h"
-extern int gp2xMouseEmuOn;
-extern int mainMenu_mouseMultiplier;
-#endif
-
-
 int nr_joysticks;
 
 SDL_Joystick *uae4all_joy0, *uae4all_joy1;
@@ -194,12 +158,12 @@ void read_joystick(int nr, unsigned int *dir, int *button)
 #endif
     }
     else
+#endif
     {
     	if (left) top = !top;
     	if (right) bot = !bot;
     	*dir = bot | (right << 1) | (top << 8) | (left << 9);
     }
-#endif
 #endif
 }
 

@@ -51,37 +51,6 @@ extern int __sdl_dc_emulate_mouse;
 #include "maemo/sdlvscalers.h"
 #endif
 
-#ifdef GP2X
-#include "gp2x.h"
-#include "gp2xutil.h"
-#endif
-
-#ifdef PSP
-#include "psp.h"
-#include "psputil.h"
-#endif
-
-#ifdef GIZMONDO
-#include "gizmondo.h"
-#include "gizmondoutil.h"
-#endif
-
-
-#if defined (GP2X) || defined (GIZMONDO) || defined (PSP)
-#include "inputmode.h"
-#ifdef GP2X
-#include "volumecontrol.h"
-#endif
-
-extern int gp2xMouseEmuOn;
-extern int gp2xButtonRemappingOn;
-extern int hasGp2xButtonRemapping;
-
-int show_inputmode = 0;
-int show_volumecontrol;
-extern int soundVolume;
-#endif
-
 #include "debug_uae4all.h"
 
 #include "vkbd.h"
@@ -99,7 +68,6 @@ Uint32 uae4all_numframes=0;
 
 /** The current scaler object */
 Scaler* scaler = NULL;
-
 
 #ifdef DEBUG_FRAMERATE
 
@@ -181,22 +149,6 @@ void flush_block (int ystart, int ystop)
     if (SDL_MUSTLOCK(prSDLScreen))
     SDL_UnlockSurface (prSDLScreen);
 #endif
-#if defined (GP2X) || defined (PSP) || defined (GIZMONDO)
-	if (vkbd_mode)
-	{
-		vkbd_key=vkbd_process();
-	}
-	if (show_inputmode)
-	{
-		inputmode_redraw();
-	}
-#ifdef GP2X
-	else if (show_volumecontrol)
-	{
-		volumecontrol_redraw();
-	}
-#endif
-#endif
 #ifndef DOUBLEBUFFER
     SDL_UpdateRect(prSDLScreen, 0, ystart, current_width, ystop-ystart+1);
 #endif
@@ -214,10 +166,8 @@ void flush_block (int ystart, int ystop)
 	}
 	if (emulated_mouse)
 		vkbd_mouse();
-#if !defined (GP2X) && !defined (PSP) && !defined (GIZMONDO)
 	if (vkbd_mode)
 		vkbd_key=vkbd_process();
-#endif
 #if defined(DOUBLEBUFFER) || defined(DINGOO)
 	SDL_Flip(prSDLScreen);
 #endif
@@ -342,7 +292,7 @@ static void graphics_subinit (void)
 #ifdef MAEMO_CHANGES
 		prSDLScreen = SDL_SetVideoMode(PREFS_GFX_WIDTH, PREFS_GFX_HEIGHT, 16, uiSDLVidModFlags|VIDEO_FLAGS);
 #else
-	{prSDLScreen = SDL_SetVideoMode(current_width, current_height, 16, uiSDLVidModFlags|VIDEO_FLAGS);printf("prSDLScreen is null, creating new screen\n");}
+		prSDLScreen = SDL_SetVideoMode(current_width, current_height, 16, uiSDLVidModFlags|VIDEO_FLAGS);
 #endif
 #endif
 	if (prSDLScreen == NULL)
@@ -371,7 +321,7 @@ static void graphics_subinit (void)
 #else
 		SDL_Flip(prSDLScreen);
 #endif
-#if !defined (DREAMCAST) && !defined (PSP) && !defined (GIZMONDO) && !defined (GP2X)
+#ifndef DREAMCAST
 		/* Set UAE window title and icon name */
 		SDL_WM_SetCaption("UAE4ALL","UAE4ALL");
 		/* Hide mouse cursor */
@@ -409,16 +359,6 @@ int graphics_init (void)
 {
 	int i,j;
 
-#if defined (GP2X) || defined (PSP) || defined (GIZMONDO)
-// this will hold the state of the mouse emulation toggle.  The start button
-// will enable mouse emulation, which will allow the joystick to move the 
-// mouse point (probably badly, but there you go).
-//gp2xMouseEmuOn=0;
-//hasGp2xButtonRemapping = 1;
-gp2xButtonRemappingOn = 0;
-show_volumecontrol = 0;
-#endif
-
 #ifdef DEBUG_GFX
 	dbg("Function: graphics_init");
 #endif
@@ -428,13 +368,14 @@ show_volumecontrol = 0;
 
 	graphics_subinit ();
 
-check_all_prefs();	
+	check_all_prefs();
+
 
     if (!init_colors ())
 		return 0;
 
     buttonstate[0] = buttonstate[1] = buttonstate[2] = 0;
-    for (i = 256; i--;)
+    for (i = 0; i < 256; i++)
 	uae4all_keystate[i] = 0;
 
 #ifdef DEBUG_FRAMERATE
@@ -777,143 +718,6 @@ break;
 #ifdef DEBUG_EVENTS
 	    dbg("Event: joy button down");
 #endif
-#if defined (GP2X) || defined (PSP) || defined (GIZMONDO)
-		if (gp2xButtonRemappingOn && is_overridden_button(rEvent.jbutton.button))
-		{
-			// handle the buttons as specified
-			handle_remapped_button_down(rEvent.jbutton.button);
-		}
-#ifdef GP2X
-		else if (rEvent.jbutton.button==GP2X_BUTTON_A)
-#else
-#ifdef GIZMONDO
-		else if (rEvent.jbutton.button==GIZ_BACK)
-#else
-		else if (rEvent.jbutton.button==PSP_BUTTON_SQUARE)
-#endif
-#endif
-		{
-			// critical: temporary hack to send return and space when the A button
-			// is pressed
-			if (!uae4all_keystate[AK_RET])
-			{
-				uae4all_keystate[AK_RET] = 1;
-				record_key(AK_RET << 1);
-			}
-			if (!uae4all_keystate[AK_SPC])
-			{
-				uae4all_keystate[AK_SPC] = 1;
-				record_key(AK_SPC << 1);
-			}
-		}
-#ifdef GP2X
-		else if (rEvent.jbutton.button==GP2X_BUTTON_START)
-#else
-#ifdef GIZMONDO
-		else if (rEvent.jbutton.button==GIZ_STOP)
-#else
-		else if (rEvent.jbutton.button==PSP_BUTTON_START)
-#endif
-#endif
-		{
-			if (!vkbd_mode)
-			{
-				// only do this if the virtual keyboard isn't visible
-				
-				// state moves thus:
-				// joystick mode (with virt keyboard on L and R)
-				// mouse mode (with mouse buttons on L and R)
-				// if specified:
-				// remapping mode (with whatever's been supplied)
-				// back to start of state
-				if (!hasGp2xButtonRemapping)
-				{
-					// skip the remapping state
-					gp2xMouseEmuOn = !gp2xMouseEmuOn;
-				}
-				else
-				{
-					// start condition is gp2xMouseEmuOn = 0, gp2xButtonRemappingOn = 0
-					if (!gp2xButtonRemappingOn && !gp2xMouseEmuOn)
-					{
-						// move to mouse emu mode
-						gp2xMouseEmuOn = 1;
-						gp2xButtonRemappingOn = 0;
-					}
-					else if (gp2xMouseEmuOn && !gp2xButtonRemappingOn)
-					{
-						// move to button remapping mode
-						gp2xMouseEmuOn = 0;
-						gp2xButtonRemappingOn = 1;
-					}
-					else if (!gp2xMouseEmuOn && gp2xButtonRemappingOn)
-					{
-						gp2xMouseEmuOn = 0;
-						gp2xButtonRemappingOn = 0;
-					}
-				}
-
-				show_inputmode = 1;
-			}			
-		}
-		else if (gp2xMouseEmuOn)
-		{
-#ifdef GP2X
-			if (rEvent.jbutton.button==GP2X_BUTTON_L)
-				buttonstate[0] = 1;
-			
-			if (rEvent.jbutton.button==GP2X_BUTTON_R)
-				buttonstate[2] = 1;
-#else
-#ifdef GIZMONDO
-			if (rEvent.jbutton.button==GIZ_LTRIG)
-				buttonstate[0] = 1;
-			
-			if (rEvent.jbutton.button==GIZ_RTRIG)
-				buttonstate[2] = 1;
-
-#else
-			if (rEvent.jbutton.button==PSP_BUTTON_L)
-				buttonstate[0] = 1;
-			
-			if (rEvent.jbutton.button==PSP_BUTTON_R)
-				buttonstate[2] = 1;
-
-#endif
-#endif
-		}
-		
-		else if ((!gp2xMouseEmuOn) && (!gp2xButtonRemappingOn) && (!vkbd_mode) && (vkbd_button2!=(SDLKey)0))
-		{
-			if (vkbd_button2)
-				rEvent.key.keysym.sym=vkbd_button2;
-			else
-				break;
-		}
-#ifdef GP2X
-		if (rEvent.jbutton.button==GP2X_BUTTON_VOLUP)
-		{
-			if (soundVolume <100)
-			{
-				soundVolume+= 10;
-				
-				gp2x_set_volume(soundVolume);
-			}
-			show_volumecontrol = 1;
-		}
-		else if (rEvent.jbutton.button==GP2X_BUTTON_VOLDOWN)
-		{
-			int vol;
-
-			if (soundVolume > 0)
-			{
-				soundVolume-= 10;
-				gp2x_set_volume(soundVolume);
-			}
-			show_volumecontrol = 1;
-		}
-#endif
-#else         
 	    if ((rEvent.jbutton.button==6) && (!vkbd_mode) && (vkbd_button2!=(SDLKey)0))
 	    {
 		    if (vkbd_button2)
@@ -921,14 +725,13 @@ break;
 		    else
 			    break;
             }
-#endif
 	    else
 	    	break;
         case SDL_KEYDOWN:
 #ifdef DEBUG_EVENTS
 	    dbg("Event: key down");
 #endif
-#if !defined (DREAMCAST) && !defined (GP2X)
+#ifndef DREAMCAST
 	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP)
 #ifdef DINGOO
 		&&(rEvent.key.keysym.sym!=SDLK_ESCAPE)
@@ -976,85 +779,6 @@ break;
 #ifdef DEBUG_EVENTS
 	    dbg("Event: joy button up");
 #endif
-#if defined (GP2X) || defined (PSP) || defined (GIZMONDO)
-			if (gp2xButtonRemappingOn && is_overridden_button(rEvent.jbutton.button))
-			{
-				// handle the buttons as specified
-				handle_remapped_button_up(rEvent.jbutton.button);
-			}
-#ifdef GP2X
-        	else if (rEvent.jbutton.button==GP2X_BUTTON_A)
-#else
-#ifdef GIZMONDO
-			else if (rEvent.jbutton.button==GIZ_BACK)
-#else
-			else if (rEvent.jbutton.button==PSP_BUTTON_SQUARE)
-#endif
-#endif
-			{
-				// critical: temporary hack to send return and space when the A button
-				// is pressed
-				uae4all_keystate[AK_RET] = 0;
-				record_key((AK_RET << 1) | 1);
-				
-				uae4all_keystate[AK_SPC] = 0;
-				record_key((AK_SPC << 1) | 1);
-			}
-			else if (gp2xMouseEmuOn)
-			{
-#ifdef GP2X
-				if (rEvent.jbutton.button==GP2X_BUTTON_L || rEvent.jbutton.button==GP2X_BUTTON_B)
-				{
-					printf("Pressed Left Mouse");
-					buttonstate[0] = 0;
-				}
-				else if (rEvent.jbutton.button==GP2X_BUTTON_R || rEvent.jbutton.button==GP2X_BUTTON_X)
-				{
-					printf("Pressed Right Mouse");
-					buttonstate[2] = 0;
-				}
-#else
-#ifdef GIZMONDO
-				if (rEvent.jbutton.button==GIZ_LTRIG)
-				{
-					buttonstate[0] = 0;
-				}
-				else if (rEvent.jbutton.button==GIZ_RTRIG)
-				{
-					buttonstate[2] = 0;
-				}
-#else
-				if (rEvent.jbutton.button==PSP_BUTTON_L)
-				{
-					buttonstate[0] = 0;
-				}
-				else if (rEvent.jbutton.button==PSP_BUTTON_R)
-				{
-					buttonstate[2] = 0;
-				}
-#endif
-#endif
-			}
-#ifdef GP2X
-			if (rEvent.jbutton.button==GP2X_BUTTON_VOLDOWN || rEvent.jbutton.button==GP2X_BUTTON_VOLUP)
-			{
-				show_volumecontrol = 0;
-			}
-#endif
-#ifdef GP2X
-			if (rEvent.jbutton.button==GP2X_BUTTON_START)
-#else
-#ifdef GIZMONDO
-			if (rEvent.jbutton.button==GIZ_STOP)
-#else
-			if (rEvent.jbutton.button==PSP_BUTTON_START)
-#endif
-#endif
-			{
-				show_inputmode = 0;
-			}
-
-#else         
 	    if ((rEvent.jbutton.button==6) && (!vkbd_mode) && (vkbd_button2!=(SDLKey)0))
 	    {
 		    if (vkbd_button2)
@@ -1062,14 +786,13 @@ break;
 		    else
 			    break;
             }
-#endif
 	    else
 	    	break;
 	case SDL_KEYUP:
 #ifdef DEBUG_EVENTS
 	    dbg("Event: key up");
 #endif
-#if !defined (DREAMCAST) && !defined (GP2X)
+#ifndef DREAMCAST
 	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP)
 #ifdef DINGOO
 		&&(rEvent.key.keysym.sym!=SDLK_ESCAPE)
