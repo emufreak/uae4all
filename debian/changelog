@@ -1,3 +1,12 @@
+uae4all (1rc2-5) fremantle; urgency=low
+
+  * Fixed sound option selection.
+  * Added 'silent' sound emulation.
+  * KICK.ROM missing error message more informative.
+  * Proper version information in menu.
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Tue, 20 Apr 2010 14:12:35 +0200
+
 uae4all (1rc2-4) fremantle; urgency=low
 
   * Do not show hidden files and directories in file selector.
