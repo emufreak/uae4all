@@ -13,7 +13,11 @@
 
 extern int emulating;
 
+#ifdef MAEMO_CHANGES
+static char *text_str_title="----- UAE4All " APP_VERSION " ------";
+#else
 static char *text_str_title="----- UAE4ALL rc2 ------";
+#endif
 static char *text_str_load="Select Image Disk (X)";
 static char *text_str_save="SaveStates (Y)";
 static char *text_str_throttle="Throttle ";

@@ -6,9 +6,15 @@ static char *menu_msg="                         Amiga emulator "
  "for Dingoo "
 #endif
 #ifdef MAEMO_CHANGES
- "for Maemo (" APP_VERSION ") "
+ "for Maemo "
 #endif
 #endif
- "by Chui.                    Second release Candidate.                               GPL License.                                          ";
+ "by Chui"
+#ifdef MAEMO_CHANGES
+ " (Maemo port by smoku)."
+#else
+ ".                    Second release Candidate."
+#endif
+ "                               GPL License.                                          ";
 
 #define MAX_SCROLL_MSG (-1500)
