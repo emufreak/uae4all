@@ -1,3 +1,9 @@
+uae4all (1rc2-6) fremantle; urgency=low
+
+  * Added check for required KICK.ROM size
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Tue, 20 Apr 2010 22:26:00 +0200
+
 uae4all (1rc2-5) fremantle; urgency=low
 
   * Fixed sound option selection.
