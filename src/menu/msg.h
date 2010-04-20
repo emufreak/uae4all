@@ -11,7 +11,7 @@ static char *menu_msg="                         Amiga emulator "
 #endif
  "by Chui"
 #ifdef MAEMO_CHANGES
- " (Maemo port by smoku)."
+ " (ported by smoku)."
 #else
  ".                    Second release Candidate."
 #endif
