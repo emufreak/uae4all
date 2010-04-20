@@ -35,6 +35,7 @@ static char *text_str_auto="auto";
 static char *text_str_sound="Sound";
 static char *text_str_on="on";
 static char *text_str_off="off";
+static char *text_str_faked="silent";
 static char *text_str_video="Video Mode";
 static char *text_str_pal="PAL";
 static char *text_str_ntsc="NTSC";
@@ -83,7 +84,7 @@ int mainMenu_frameskip=0;
 
 
 #if !defined(DEBUG_UAE4ALL) && !defined(PROFILER_UAE4ALL) && !defined(AUTO_RUN) && !defined(AUTO_FRAMERATE)
-int mainMenu_sound=-1;
+int mainMenu_sound=DEFAULT_SOUND;
 #else
 int mainMenu_sound=0;
 #endif
@@ -173,14 +174,20 @@ static void draw_mainMenu(int c)
 		write_text(29,11,text_str_auto);
 	
 	write_text(6,13,text_str_sound);
-	if ((!mainMenu_sound)&&((c!=4)||(bb)))
+	if ((mainMenu_sound==0)&&((c!=4)||(bb)))
 		write_text_inv(17,13,text_str_off);
 	else
 		write_text(17,13,text_str_off);
-	if ((mainMenu_sound)&&((c!=4)||(bb)))
+
+	if ((mainMenu_sound==1)&&((c!=4)||(bb)))
 		write_text_inv(22,13,text_str_on);
 	else
 		write_text(22,13,text_str_on);
+
+	if ((mainMenu_sound==2)&&((c!=4)||(bb)))
+		write_text_inv(26,13,text_str_faked);
+	else
+		write_text(26,13,text_str_faked);
 
 	write_text(6,15,text_str_video);
 	if ((!mainMenu_ntsc)&&((c!=5)||(bb)))
@@ -381,8 +388,24 @@ static int key_mainMenu(int *cp)
 					}
 					break;
 				case 4:
-					if ((left)||(right))
-						mainMenu_sound=!mainMenu_sound;
+					if (left)
+					{
+						if (mainMenu_sound == 1)
+							mainMenu_sound = 0;
+						else if (mainMenu_sound == 2)
+							mainMenu_sound = 1;
+						else if (mainMenu_sound == 0)
+							mainMenu_sound = 2;
+					}
+					else if (right)
+					{
+						if (mainMenu_sound == 2)
+							mainMenu_sound = 0;
+						else if (mainMenu_sound == 0)
+							mainMenu_sound = 1;
+						else if (mainMenu_sound == 1)
+							mainMenu_sound = 2;
+					}
 					break;
 				case 5:
 					if ((left)||(right))
