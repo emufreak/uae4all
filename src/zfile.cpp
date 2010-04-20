@@ -450,6 +450,10 @@ int uae4all_init_rom(const char *name)
 		fseek(f,0,SEEK_SET);
 		if (uae4all_rom_len>MAX_ROM_LEN)
 		    uae4all_rom_len=MAX_ROM_LEN;
+		if (uae4all_rom_len<MAX_ROM_LEN) {
+		    fclose(f);
+		    return -2;
+		}
 		fread(uae4all_rom_memory,uae4all_rom_len,1,f);
 		uae4all_rom_pos=0;
 		fclose(f);

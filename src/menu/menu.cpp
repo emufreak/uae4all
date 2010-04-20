@@ -307,12 +307,16 @@ void init_text(int splash)
 #endif
 		for(i=0;i<10;i++)
 		{
+			int ret;
 			SDL_Event ev;
-			if (!uae4all_init_rom(romfile))
+			if (!(ret = uae4all_init_rom(romfile)))
 				break;
 
 			text_draw_background();
 			text_draw_window(54,110,250,64,"--- ERROR ---");
+			if (ret == -2)
+			write_text(11,14,"KICK.ROM to short");
+			else
 #ifdef MAEMO_CHANGES
 			write_text(8,14,"MyDocs/KICK.ROM not found");
 #else
