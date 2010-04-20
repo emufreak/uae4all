@@ -9,15 +9,10 @@ Vcs-Git: git://github.com/smokku/uae4all.git
 Package: uae4all
 Architecture: armel
 Depends: ${shlibs:Depends}
-Description: UAE4ALL is an Amiga 500 emulator.
- This is a branch emulation development from Experimental UAE 0.8.22.
- E-UAE is open-source software and is made available under the terms of the
- GNU GPL. E-UAE is based on the work of dozens of contributors including
- Bernd Schmidt (the original author and maintainer of UAE), Bernie Meyer
- (the author of the x86 JIT compiler), Toni Wilen (the current maintainer of
- WinUAE), and many more.
- .
- You need KICK.ROM in /home/user/MyDocs.
+Description: Commodore Amiga 500 (1MB) Emulator.
+ UAE4All is a "Lite" Amiga Emulator. It is based on E-UAE core
+ and utilizes Cyclone emulator of Motorola 68000 microprocessor
+ for ARM hardware. It emulates most Commodore Amiga 500 hardware.
 XSBC-Bugtracker: http://github.com/smokku/uae4all/issues
 XB-Maemo-Display-Name: UAE4All Maemo Edition
 XB-Maemo-Icon-26:
