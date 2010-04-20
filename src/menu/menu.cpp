@@ -315,7 +315,7 @@ void init_text(int splash)
 			text_draw_background();
 			text_draw_window(54,110,250,64,"--- ERROR ---");
 			if (ret == -2)
-			write_text(11,14,"KICK.ROM to short");
+			write_text(11,14,"KICK.ROM to small");
 			else
 #ifdef MAEMO_CHANGES
 			write_text(8,14,"MyDocs/KICK.ROM not found");
