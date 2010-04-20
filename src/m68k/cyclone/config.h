@@ -69,7 +69,7 @@
 /*
  * If enabled, Cyclone will call .IrqCallback routine from it's context whenever it
  * acknowledges an IRQ. IRQ level (.irq) is not cleared automatically, do this in your
- * handler if needed. PC, flags and cycles are valid in the context and can be read.
+ * handler if needed.
  * This function must either return vector number to use for interrupt exception,
  * CYCLONE_INT_ACK_AUTOVECTOR to use autovector (this is the most common case), or
  * CYCLONE_INT_ACK_SPURIOUS (least common case).
@@ -148,7 +148,7 @@
 /*
  * If enabled, address error exception will be generated if 68k code jumps to an
  * odd address. Causes very small performance hit (2 ARM instructions for every
- * emulated jump/return/exception).
+ * emulated jump/return/exception in normal case).
  * Note: checkpc() must not clear least significant bit of rebased address
  * for this to work, as checks are performed after calling checkpc().
  */
@@ -162,7 +162,7 @@
 #define EMULATE_ADDRESS_ERRORS_IO   1
 
 /*
- * If an address error happens during reset/bus error/address error processing,
+ * If an address error happens during another address error processing,
  * the processor halts until it is reset (catastrophic system failure, as the manual
  * states). This option enables halt emulation.
  * Note that this might be not desired if it is known that emulated system should

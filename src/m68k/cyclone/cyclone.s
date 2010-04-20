@@ -33257,9 +33257,7 @@ Op5048:
   str r1,[r7,r10,lsl #2]
 
   ldrh r8,[r4],#2 ;@ Fetch next opcode
-@ Hack hack hack...
-  subs r5,r5,#8 ;@ Subtract cycles
-@  subs r5,r5,#4 ;@ Subtract cycles
+  subs r5,r5,#4 ;@ Subtract cycles
   ldrge pc,[r6,r8,asl #2] ;@ Jump to opcode handler
   b CycloneEnd
 
@@ -38865,9 +38863,7 @@ Op5e48:
   str r1,[r7,r10,lsl #2]
 
   ldrh r8,[r4],#2 ;@ Fetch next opcode
-@ Hack hack hack...
-  subs r5,r5,#8 ;@ Subtract cycles
-@  subs r5,r5,#4 ;@ Subtract cycles
+  subs r5,r5,#4 ;@ Subtract cycles
   ldrge pc,[r6,r8,asl #2] ;@ Jump to opcode handler
   b CycloneEnd
 
