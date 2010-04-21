@@ -1,3 +1,9 @@
+uae4all (1rc2-9) fremantle; urgency=low
+
+  * Reverted to FAME core for additional compatibility.
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Thu, 22 Apr 2010 00:30:11 +0200
+
 uae4all (1rc2-8) fremantle; urgency=low
 
   * Fixed keyboard mapping with joy/mouse emulation mode.

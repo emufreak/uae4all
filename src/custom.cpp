@@ -16,7 +16,16 @@
 // #define STOP_WHEN_COPPER
 #define STOP_WHEN_NASTY
 // #define CUSTOM_PREFETCHS
-typedef int sprbuf_res_t, cclockres_t, hwres_t,	bplres_t;
+typedef int sprbuf_res_t, cclockres_t, hwres_t, bplres_t;
+
+#ifdef USE_FAME_CORE
+#if defined(DREAMCAST) || defined(USE_FAME_CORE_C)
+#define IO_CYCLE io_cycle_counter
+#else
+#define IO_CYCLE __io_cycle_counter
+#endif
+extern signed int IO_CYCLE;
+#endif
 
 #include "sysconfig.h"
 #include "sysdeps.h"
@@ -113,7 +122,7 @@ unsigned long int currcycle, nextevent;
 struct ev eventtab[ev_max];
 
 static int vpos;
-extern int next_vpos[512];
+extern int *next_vpos;
 static uae_u16 lof;
 static int next_lineno;
 static int lof_changed = 0;
@@ -1333,8 +1342,6 @@ static _INLINE_ void record_color_change (int hpos, int regno, unsigned long val
     curr_color_changes[next_color_change++].value = value;
 }
 
-typedef int sprbuf_res_t, cclockres_t, hwres_t, bplres_t;
-
 static _INLINE_ void expand_sprres (void)
 {
     switch ((bplcon3 >> 6) & 3) {
@@ -1684,8 +1691,7 @@ static _INLINE_ void init_hz (void)
 	vblank_hz = VBLANK_HZ_NTSC;
     }
 
-    //write_log ("Using %s timing\n", isntsc ? "NTSC" : "PAL");
-    printf("Using %s timing\n", isntsc ? "NTSC" : "PAL");
+    write_log ("Using %s timing\n", isntsc ? "NTSC" : "PAL");
 }
 
 static _INLINE_ void calcdiw (void)
@@ -2034,58 +2040,6 @@ static _INLINE_ void DMACON (uae_u16 v, int hpos)
     events_schedule();
 }
 
-
-static _INLINE_ void SET_INTERRUPT(void)
-{
-	int new_irqs = 0, new_level = 0;
-
-	if (intena & 0x4000)
-	{
-		int imask = intreq & intena;
-		if (imask & 0x0007) { new_irqs |= 1 << 1; new_level = 1; }
-		if (imask & 0x0008) { new_irqs |= 1 << 2; new_level = 2; }
-		if (imask & 0x0070) { new_irqs |= 1 << 3; new_level = 3; }
-		if (imask & 0x0780) { new_irqs |= 1 << 4; new_level = 4; }
-		if (imask & 0x1800) { new_irqs |= 1 << 5; new_level = 5; }
-		if (imask & 0x2000) { new_irqs |= 1 << 6; new_level = 6; }
-	}
-
-	if (new_irqs == M68KCONTEXT.interrupts[0]); // nothing changed
-	else if (new_irqs == 0)
-	{
-		M68KCONTEXT.interrupts[0] = 0; // uae4all_go_interrupt = 0;
-		m68k_irq_update(0);
-	}
-	else
-	{
-		int old_irqs = M68KCONTEXT.interrupts[0], old_level = 0, end_timeslice;
-
-		for (old_irqs>>=1; old_irqs; old_irqs>>=1, old_level++);
-		end_timeslice = new_level > old_level && new_level > _68k_intmask;
-
-		M68KCONTEXT.interrupts[0] = new_irqs;
-		m68k_irq_update(end_timeslice);
-		/*
-		if (new_level > old_level && new_level > _68k_intmask)
-		{
-			uae4all_go_interrupt = new_irqs; // delayed interrupt
-			m68k_irq_update(1);
-		}
-		else
-		{
-			M68KCONTEXT.interrupts[0] = new_irqs;
-			uae4all_go_interrupt = 0;
-			m68k_irq_update(0);
-		}
-		*/
-	}
-
-	//printf("%i:%03i ST_IT int req/ena=%04x/%04x,",M68KCONTEXT.cycles_counter,IO_CYCLE,intreq,intena);
-	//printf(" masc=%02x, ints=%02x\n",new_irqs,M68KCONTEXT.interrupts[0]);
-}
-
-
-#if 0
 #if defined(USE_FAME_CORE) && !defined(SPECIAL_DEBUG_INTERRUPTS)
 
 static void __inline__ custom_fame_lower(int n_int)
@@ -2131,8 +2085,8 @@ static void __inline__ custom_fame_raise(int n_int)
 static _INLINE_ void SET_INTERRUPT(void)
 {
     uae4all_prof_start(14);
-#ifdef DEBUG_N
-    dbgf("%i|%03i: SET_INTERRUPT intreq=0x%X, intena=0x%X\n",M68KCONTEXT.cycles_counter,IO_CYCLE,intreq,intena);
+#ifdef DEBUG_INTERRUPTS
+    dbgf("SET_INTERRUPT intreq=0x%X, intena=0x%X\n",intreq,intena);
 #endif
 #if defined(USE_FAME_CORE) || defined(DEBUG_M68K)
     uae_u16 imask = intreq & intena;
@@ -2228,7 +2182,6 @@ static _INLINE_ void SET_INTERRUPT(void)
 					uae4all_go_interrupt=mascara;
 //					m68k_release_timeslice();
 //					if (IO_CYCLE>24)
-//    dbgf("%i|%i: IO_CYCLE\n",M68KCONTEXT.cycles_counter,IO_CYCLE);
 						IO_CYCLE = 24;
 				}
 				else
@@ -2240,7 +2193,6 @@ static _INLINE_ void SET_INTERRUPT(void)
 #endif
     }
  
-    m68k_irq_update();
 
 #if !defined(USE_FAME_CORE) || defined(SPECIAL_DEBUG_INTERRUPTS)
     set_special (SPCFLAG_INT);
@@ -2255,8 +2207,6 @@ static _INLINE_ void SET_INTERRUPT(void)
 #endif
     uae4all_prof_end(14);
 }
-#endif
-
 
 /*static int trace_intena = 0;*/
 
