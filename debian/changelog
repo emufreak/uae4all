@@ -1,3 +1,16 @@
+uae4all (1rc2-8) fremantle; urgency=low
+
+  * Fixed keyboard mapping with joy/mouse emulation mode.
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Wed, 21 Apr 2010 14:08:31 +0200
+
+uae4all (1rc2-7) fremantle; urgency=low
+
+  * Implemented Joystick/Mouse emulation toggle
+  * Changed mapping of fire/mouse buttons
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Wed, 21 Apr 2010 13:43:32 +0200
+
 uae4all (1rc2-6) fremantle; urgency=low
 
   * Added check for required KICK.ROM size

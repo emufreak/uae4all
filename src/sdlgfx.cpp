@@ -132,7 +132,7 @@ static int red_shift, green_shift, blue_shift;
 static int current_width, current_height;
 static SDL_Color arSDLColors[256];
 static int ncolors = 0;
-extern int emulated_mouse, emulated_mouse_button1, emulated_mouse_button2;
+extern int emulated_joystick, emulated_mouse, emulated_mouse_button1, emulated_mouse_button2;
 
 /* Keyboard and mouse */
 int uae4all_keystate[256];
@@ -731,6 +731,10 @@ break;
 #ifdef DEBUG_EVENTS
 	    dbg("Event: key down");
 #endif
+#ifdef MAEMO_CHANGES
+#include "maemo/keyboard.h"
+	    decode_maemo_toggles(&rEvent.key.keysym);
+#endif
 #ifndef DREAMCAST
 	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP)
 #ifdef DINGOO
@@ -740,18 +744,15 @@ break;
 		&&(rEvent.key.keysym.sym!=SDLK_BACKSPACE)
 #endif
 #ifdef EMULATED_JOYSTICK
-		&&((rEvent.key.keysym.sym!=SDLK_SPACE)||((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode)))
-		&&((rEvent.key.keysym.sym!=SDLK_LSHIFT)||((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode)))
-		&&(rEvent.key.keysym.sym!=SDLK_LCTRL)
-#ifdef MAEMO_CHANGES
-		&&((rEvent.key.keysym.sym!=SDLK_MODE)||((rEvent.key.keysym.sym==SDLK_MODE)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))
-#else
-		&&((rEvent.key.keysym.sym!=SDLK_LALT)||((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))
-#endif
-		&&(rEvent.key.keysym.sym!=SDLK_UP)
+		&&(
+		 !(emulated_joystick||emulated_mouse)
+		||(rEvent.key.keysym.sym!=SDLK_UP)
 		&&(rEvent.key.keysym.sym!=SDLK_DOWN)
 		&&(rEvent.key.keysym.sym!=SDLK_LEFT)
 		&&(rEvent.key.keysym.sym!=SDLK_RIGHT)
+		&&(rEvent.key.keysym.sym!=SDLK_LSHIFT)
+		&&(rEvent.key.keysym.sym!=SDLK_SPACE)
+		)
 #endif
 			    )
 #endif
@@ -801,18 +802,15 @@ break;
 		&&(rEvent.key.keysym.sym!=SDLK_BACKSPACE)
 #endif
 #ifdef EMULATED_JOYSTICK
-		&&((rEvent.key.keysym.sym!=SDLK_SPACE)||((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode)))
-		&&((rEvent.key.keysym.sym!=SDLK_LSHIFT)||((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode)))
-		&&(rEvent.key.keysym.sym!=SDLK_LCTRL)
-#ifdef MAEMO_CHANGES
-		&&((rEvent.key.keysym.sym!=SDLK_MODE)||((rEvent.key.keysym.sym==SDLK_MODE)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))
-#else
-		&&((rEvent.key.keysym.sym!=SDLK_LALT)||((rEvent.key.keysym.sym==SDLK_LALT)&&(vkbd_button2!=(SDLKey)0)&&(!vkbd_mode)))
-#endif
-		&&(rEvent.key.keysym.sym!=SDLK_UP)
+		&&(
+		 !(emulated_joystick||emulated_mouse)
+		||(rEvent.key.keysym.sym!=SDLK_UP)
 		&&(rEvent.key.keysym.sym!=SDLK_DOWN)
 		&&(rEvent.key.keysym.sym!=SDLK_LEFT)
 		&&(rEvent.key.keysym.sym!=SDLK_RIGHT)
+		&&(rEvent.key.keysym.sym!=SDLK_LSHIFT)
+		&&(rEvent.key.keysym.sym!=SDLK_SPACE)
+		)
 #endif
 			    )
 #endif
@@ -833,7 +831,19 @@ break;
 		}
 	    }
 	    break;
-#ifndef MAEMO_CHANGES
+	case SDL_MOUSEMOTION:
+#ifdef DEBUG_EVENTS
+	    dbg("Event: mouse motion");
+#endif
+#ifdef MAEMO_CHANGES
+	    lastmx = (rEvent.motion.x-(PREFS_GFX_WIDTH/2-GFXVIDINFO_WIDTH)) >> 1;
+	    lastmy =  rEvent.motion.y >> 1;
+#else
+	    lastmx += rEvent.motion.xrel<<1;
+	    lastmy += rEvent.motion.yrel<<1;
+#endif
+	    newmousecounters = 1;
+	    break;
 	case SDL_MOUSEBUTTONDOWN:
 #ifdef DEBUG_EVENTS
 	    dbg("Event: mouse button down");
@@ -852,6 +862,9 @@ break;
 		else
 			buttonstate[0]=1;
 #else
+#ifndef MAEMO_CHANGES
+	    if (!emulated_mouse)
+#endif
 	    	buttonstate[(rEvent.button.button-1)%3] = 1;
 #endif
 	    break;
@@ -874,22 +887,11 @@ break;
 			buttonstate[0]=0;
 				
 #else
-	    	buttonstate[(rEvent.button.button-1)%3] = 0;
+#ifndef MAEMO_CHANGES
+	    if (!emulated_mouse)
 #endif
-	    break;
-#endif // MAEMO_CHANGES
-	case SDL_MOUSEMOTION:
-#ifdef DEBUG_EVENTS
-	    dbg("Event: mouse motion");
+		buttonstate[(rEvent.button.button-1)%3] = 0;
 #endif
-#ifdef MAEMO_CHANGES
-	    lastmx = (rEvent.motion.x-(PREFS_GFX_WIDTH/2-GFXVIDINFO_WIDTH)) >> 1;
-	    lastmy =  rEvent.motion.y >> 1;
-#else
-	    lastmx += rEvent.motion.xrel<<1;
-	    lastmy += rEvent.motion.yrel<<1;
-#endif
-	    newmousecounters = 1;
 	    break;
 	case SDL_SYSWMEVENT:
 #ifdef DEBUG_EVENTS

@@ -72,7 +72,7 @@ extern SDL_Joystick *uae4all_joy0, *uae4all_joy1;
 extern int keycode2amiga(SDL_keysym *prKeySym);
 extern int uae4all_keystate[];
 
-int emulated_mouse_speed=4;
+int emulated_mouse_speed=2;
 int emulating=0;
 char uae4all_image_file0[128]  = { 0, };
 char uae4all_image_file1[128] = { 0, };
@@ -83,6 +83,7 @@ int drawfinished=0;
 
 extern int mainMenu_throttle, mainMenu_frameskip, mainMenu_sound, mainMenu_case, mainMenu_autosave, mainMenu_ntsc;
 
+int emulated_joystick=0;
 int emulated_left=0;
 int emulated_right=0;
 int emulated_top=0;
@@ -564,22 +565,20 @@ void gui_handle_events (void)
 			lastmy += emulated_mouse_speed;
 	    		newmousecounters = 1;
 		}
+
+		emulated_mouse_button1=keystate[SDLK_LSHIFT];
+		emulated_mouse_button2=keystate[SDLK_SPACE];
 	}
-	else
+	else if (emulated_joystick)
 	{
 		emulated_left=keystate[SDLK_LEFT];
 		emulated_right=keystate[SDLK_RIGHT];
 		emulated_top=keystate[SDLK_UP];
 		emulated_bot=keystate[SDLK_DOWN];
+
+		emulated_button1=keystate[SDLK_LSHIFT];
+		emulated_button2=keystate[SDLK_SPACE];
 	}
-	emulated_button1=keystate[SDLK_LCTRL];
-#ifdef MAEMO_CHANGES
-	emulated_button2=keystate[SDLK_MODE];
-#else
-	emulated_button2=keystate[SDLK_LALT];
-#endif
-	emulated_mouse_button1=keystate[SDLK_SPACE];
-	emulated_mouse_button2=keystate[SDLK_LSHIFT];
 #endif
 #ifndef DINGOO
 	if ( keystate[SDLK_PAGEUP] )

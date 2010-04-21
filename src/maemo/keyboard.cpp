@@ -2,6 +2,8 @@
 
 #include "../include/keyboard.h"
 
+extern int emulated_joystick, emulated_mouse, emulated_mouse_button1, emulated_mouse_button2;
+
 int decode_maemo (SDL_keysym *prKeySym)
 {
     if (!(prKeySym->mod & KMOD_MODE)) return -1;
@@ -57,7 +59,24 @@ int decode_maemo (SDL_keysym *prKeySym)
     case SDLK_u: return AK_7;
     case SDLK_i: return AK_8;
     case SDLK_o: return AK_9;
-
     default: return -1;
     }
 }
+
+void decode_maemo_toggles (SDL_keysym *prKeySym)
+{
+    int hold;
+    
+    if (prKeySym->mod & KMOD_MODE){
+    switch(prKeySym->sym)
+    {
+    case SDLK_SPACE:
+	hold = emulated_joystick;
+	emulated_joystick = !(emulated_mouse || emulated_joystick);
+	emulated_mouse = hold;
+	printf ("emu joy: %s, emu mouse: %s\n", emulated_joystick?"on":"off", emulated_mouse?"on":"off");
+	return;
+    }
+    }
+}
+
