@@ -862,7 +862,7 @@ break;
 		else
 			buttonstate[0]=1;
 #else
-#ifndef MAEMO_CHANGES
+#ifdef MAEMO_CHANGES
 	    if (!emulated_mouse)
 #endif
 	    	buttonstate[(rEvent.button.button-1)%3] = 1;
@@ -887,7 +887,7 @@ break;
 			buttonstate[0]=0;
 				
 #else
-#ifndef MAEMO_CHANGES
+#ifdef MAEMO_CHANGES
 	    if (!emulated_mouse)
 #endif
 		buttonstate[(rEvent.button.button-1)%3] = 0;
