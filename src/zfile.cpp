@@ -241,7 +241,6 @@ static void uae4all_disk_real_write(int num)
 			char *namefile=get_namefile(num);
 			void *bc=calloc(1,MAX_COMP_SIZE);
 			unsigned long sizecompressed=MAX_COMP_SIZE;
-			//int compress2(Bytef * dest, uLongf * destLen, const Bytef * source, uLong sourceLen, int level);
 			int retc=compress2((Bytef *)bc,&sizecompressed,(const Bytef *)uae4all_extra_buffer,changed,Z_BEST_COMPRESSION);
 			if (retc>=0)
 			{
@@ -341,12 +340,12 @@ FILE *zfile_open (const char *name, const char *mode)
 #ifndef DREAMCAST
 		uae4all_extra_buffer=malloc(MAX_DISK_LEN);
 #else
-		uae4all_extra_buffer=(void *)(DC_VRAM+(MAX_DISK_LEN*(4+1)));
+		uae4all_extra_buffer=(void *)(DC_VRAM+(MAX_DISK_LEN*(NUM_DRIVES+1)));
 #endif
     for(i=0;i<NUM_DRIVES;i++)
 	if (!uae4all_disk_used[i])
 		break;
-    if (i>=4)
+    if (i>=NUM_DRIVES)
 	return NULL;
 
     if (try_to_read_disk(i,name))

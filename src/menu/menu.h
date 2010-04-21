@@ -13,6 +13,7 @@ extern SDL_Surface *prSDLScreen;
 #define MENU_DIR_DEFAULT "."
 #endif
 
+#define DEFAULT_STATUSLN 1
 #define DEFAULT_SOUND 1
 #define DEFAULT_AUTOSAVE 1
 #define DEFAULT_SKIPINTRO 0
