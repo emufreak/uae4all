@@ -4,3 +4,4 @@ debian/uae4all.desktop usr/share/applications/hildon/
 debian/uae4all.png usr/share/pixmaps/
 resources/JoyTest.adf.gz usr/share/uae4all/
 resources/SysInfo.adf.gz usr/share/uae4all/
+README usr/share/uae4all/
