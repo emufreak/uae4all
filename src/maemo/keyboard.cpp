@@ -74,7 +74,7 @@ void decode_maemo_toggles (SDL_keysym *prKeySym)
 	hold = emulated_joystick;
 	emulated_joystick = !(emulated_mouse || emulated_joystick);
 	emulated_mouse = hold;
-	printf ("emu_m:%d emu_j:%d\n", emulated_mouse, emulated_joystick);
+	printf ("emu joy: %s, emu mouse: %s\n", emulated_joystick?"on":"off", emulated_mouse?"on":"off");
 	return;
     }
     }

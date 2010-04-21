@@ -566,8 +566,8 @@ void gui_handle_events (void)
 	    		newmousecounters = 1;
 		}
 
-		emulated_mouse_button1=keystate[SDLK_SPACE];
-		emulated_mouse_button2=keystate[SDLK_LSHIFT];
+		emulated_mouse_button1=keystate[SDLK_LSHIFT];
+		emulated_mouse_button2=keystate[SDLK_SPACE];
 	}
 	else if (emulated_joystick)
 	{
@@ -576,12 +576,8 @@ void gui_handle_events (void)
 		emulated_top=keystate[SDLK_UP];
 		emulated_bot=keystate[SDLK_DOWN];
 
-		emulated_button1=keystate[SDLK_LCTRL];
-#ifdef MAEMO_CHANGES
-		emulated_button2=keystate[SDLK_q];
-#else
-		emulated_button2=keystate[SDLK_LALT];
-#endif
+		emulated_button1=keystate[SDLK_LSHIFT];
+		emulated_button2=keystate[SDLK_SPACE];
 	}
 #endif
 #ifndef DINGOO
