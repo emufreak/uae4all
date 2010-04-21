@@ -132,7 +132,7 @@ static int red_shift, green_shift, blue_shift;
 static int current_width, current_height;
 static SDL_Color arSDLColors[256];
 static int ncolors = 0;
-extern int emulated_mouse, emulated_mouse_button1, emulated_mouse_button2;
+extern int emulated_joystick, emulated_mouse, emulated_mouse_button1, emulated_mouse_button2;
 
 /* Keyboard and mouse */
 int uae4all_keystate[256];
@@ -731,6 +731,10 @@ break;
 #ifdef DEBUG_EVENTS
 	    dbg("Event: key down");
 #endif
+#ifdef MAEMO_CHANGES
+#include "maemo/keyboard.h"
+	    decode_maemo_toggles(&rEvent.key.keysym);
+#endif
 #ifndef DREAMCAST
 	    if ((rEvent.key.keysym.sym!=SDLK_F11)&&(rEvent.key.keysym.sym!=SDLK_F12)&&(rEvent.key.keysym.sym!=SDLK_PAGEUP)
 #ifdef DINGOO
@@ -740,6 +744,7 @@ break;
 		&&(rEvent.key.keysym.sym!=SDLK_BACKSPACE)
 #endif
 #ifdef EMULATED_JOYSTICK
+		&&((emulated_joystick||emulated_mouse)
 		&&((rEvent.key.keysym.sym!=SDLK_SPACE)||((rEvent.key.keysym.sym==SDLK_SPACE)&&(vkbd_button3!=(SDLKey)0)&&(!vkbd_mode)))
 		&&((rEvent.key.keysym.sym!=SDLK_LSHIFT)||((rEvent.key.keysym.sym==SDLK_LSHIFT)&&(vkbd_button4!=(SDLKey)0)&&(!vkbd_mode)))
 		&&(rEvent.key.keysym.sym!=SDLK_LCTRL)
@@ -752,6 +757,7 @@ break;
 		&&(rEvent.key.keysym.sym!=SDLK_DOWN)
 		&&(rEvent.key.keysym.sym!=SDLK_LEFT)
 		&&(rEvent.key.keysym.sym!=SDLK_RIGHT)
+		)
 #endif
 			    )
 #endif
