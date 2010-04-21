@@ -73,8 +73,10 @@ Escape : Fn + Ctrl + BACKSPACE
 Keypad : Fn + Shift + Q-P ASFV.ENTER
 
 
-Mouse/Joystick emulation toggle:
-Fn + SPACE
+Toggles:
+StatusBar                  : Fn + S
+Mouse/Joy emulation toggle : Fn + SPACE
+
 
 Mouse1 / Joystick2 keymapping:
 Toggle     : Fn + SPACE   (off/joy/mouse)

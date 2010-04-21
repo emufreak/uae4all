@@ -3,6 +3,7 @@
 #include "../include/keyboard.h"
 
 extern int emulated_joystick, emulated_mouse, emulated_mouse_button1, emulated_mouse_button2;
+extern int mainMenu_showStatus;
 
 int decode_maemo (SDL_keysym *prKeySym)
 {
@@ -76,6 +77,8 @@ void decode_maemo_toggles (SDL_keysym *prKeySym)
 	emulated_mouse = hold;
 	printf ("emu joy: %s, emu mouse: %s\n", emulated_joystick?"on":"off", emulated_mouse?"on":"off");
 	return;
+	case SDLK_s:
+	mainMenu_showStatus = !mainMenu_showStatus;
     }
     }
 }

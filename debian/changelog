@@ -1,8 +1,9 @@
 uae4all (1rc2-9) fremantle; urgency=low
 
   * Reverted to FAME core for additional compatibility.
+  * Added shortcut to disable/enable status bar.
 
- -- Tomasz Sterna <tomek@xiaoka.com>  Thu, 22 Apr 2010 00:30:11 +0200
+ -- Tomasz Sterna <tomek@xiaoka.com>  Thu, 22 Apr 2010 00:45:48 +0200
 
 uae4all (1rc2-8) fremantle; urgency=low
 
