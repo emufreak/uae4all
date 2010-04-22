@@ -465,8 +465,8 @@ static int key_mainMenu(int *cp)
 static void clear_events(void)
 {
 	SDL_Event event;
-	while (SDL_PollEvent(&event))
-		SDL_Delay(20);
+	while (SDL_PollEvent(&event));
+	//	SDL_Delay(20);
 }
 
 static void raise_mainMenu()
