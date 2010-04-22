@@ -253,7 +253,7 @@ void init_text(int splash)
 		r.h=sur->w;
 		r.w=sur->h;
 		SDL_FillRect(text_screen,NULL,0xFFFFFFFF);
-		while(SDL_PollEvent(&ev)) SDL_Delay(50);
+		while(SDL_PollEvent(&ev));
 		for (i=128;(i>-8)&&(!toexit);i-=8)
 		{
 #ifdef DREAMCAST
@@ -265,11 +265,19 @@ void init_text(int splash)
 			SDL_BlitSurface(sur,NULL,text_screen,&r);
 			fade16(text_screen,i);
 			text_flip();
-			while(SDL_PollEvent(&ev)) toexit=1;
+			while(SDL_PollEvent(&ev))
+				if(ev.type == SDL_KEYDOWN
+				|| ev.type == SDL_MOUSEBUTTONDOWN
+				|| ev.type == SDL_JOYBUTTONDOWN
+				|| ev.type == SDL_QUIT) toexit=1;
 		}
 		for(i=0;(i<23)&&(!toexit);i++)
 		{
-			while(SDL_PollEvent(&ev)) toexit=1;
+			while(SDL_PollEvent(&ev))
+				if(ev.type == SDL_KEYDOWN
+				|| ev.type == SDL_MOUSEBUTTONDOWN
+				|| ev.type == SDL_JOYBUTTONDOWN
+				|| ev.type == SDL_QUIT) toexit=1;
 			SDL_Delay(100);
 		}
 		for(i=0;(i<128)&&(!toexit);i+=16)
@@ -283,7 +291,11 @@ void init_text(int splash)
 			SDL_BlitSurface(sur,NULL,text_screen,&r);
 			fade16(text_screen,i);
 			text_flip();
-			while(SDL_PollEvent(&ev)) toexit=1;
+			while(SDL_PollEvent(&ev))
+				if(ev.type == SDL_KEYDOWN
+				|| ev.type == SDL_MOUSEBUTTONDOWN
+				|| ev.type == SDL_JOYBUTTONDOWN
+				|| ev.type == SDL_QUIT) toexit=1;
 		}
 		for(i=128;(i>-8)&&(!toexit);i-=8)
 		{
@@ -295,7 +307,11 @@ void init_text(int splash)
 			text_draw_background();
 			fade16(text_screen,i);
 			text_flip();
-			while(SDL_PollEvent(&ev)) toexit=1;
+			while(SDL_PollEvent(&ev))
+				if(ev.type == SDL_KEYDOWN
+				|| ev.type == SDL_MOUSEBUTTONDOWN
+				|| ev.type == SDL_JOYBUTTONDOWN
+				|| ev.type == SDL_QUIT) toexit=1;
 		}
 		SDL_FreeSurface(sur);
 #else
