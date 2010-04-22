@@ -36,7 +36,7 @@ MORE_CFLAGS += \
 	-DDATA_PREFIX=\"/usr/share/uae4all/data/\" \
 	-DSAVE_PREFIX=\"/home/user/\"
 
-MORE_CFLAGS += -DMAEMO_CHANGES
+MORE_CFLAGS += -DMAEMO_CHANGES -DSIXAXIS_SUPPORT
 
 ifeq ($(SBOX_DPKG_INST_ARCH),armel)
 MORE_CFLAGS += -mcpu=cortex-a8 -mtune=cortex-a8 -mfloat-abi=softfp -mfpu=neon

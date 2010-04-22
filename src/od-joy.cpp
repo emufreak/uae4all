@@ -52,7 +52,6 @@ void read_joystick(int nr, unsigned int *dir, int *button)
     struct joy_range *r = nr == 0 ? &range0 : &range1;
     x_axis = SDL_JoystickGetAxis (joy, 0);
     y_axis = SDL_JoystickGetAxis (joy, 1);
-
     if (x_axis < r->minx) r->minx = x_axis;
     if (y_axis < r->miny) r->miny = y_axis;
     if (x_axis > r->maxx) r->maxx = x_axis;
@@ -69,10 +68,35 @@ void read_joystick(int nr, unsigned int *dir, int *button)
     	bot = 1;
 
     num = SDL_JoystickNumButtons (joy);
-    if (num > 16)
-	num = 16;
+    if (num > 24)
+	num = 24;
     for (i = 0; i < num; i++)
+#ifdef MAEMO_CHANGES
+	{
+	Uint8 b = SDL_JoystickGetButton (joy, i);
+	if (b) {
+#ifdef SIXAXIS_SUPPORT
+	switch(i){
+		case 4:
+			top = 1;
+			continue;
+		case 6:
+			bot = 1;
+			continue;
+		case 7:
+			left = 1;
+			continue;
+		case 5:
+			right = 1;
+			continue;
+	}
+#endif
+	*button |= (b & 1) << (i & 1);
+	}
+	}
+#else
 	*button |= (SDL_JoystickGetButton (joy, i) & 1) << i;
+#endif
 #ifdef EMULATED_JOYSTICK
     extern int emulated_left, emulated_right, emulated_top, emulated_bot, emulated_button1, emulated_button2, emulated_mouse_button1, emulated_mouse_button2;
     if (nr)
