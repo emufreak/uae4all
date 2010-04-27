@@ -1,3 +1,9 @@
+uae4all (1rc2-11) fremantle; urgency=low
+
+  * Fixed HAM and EHB modes.
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Tue, 27 Apr 2010 11:14:11 +0200
+
 uae4all (1rc2-10) fremantle; urgency=low
 
   * Fixed real joystick support.
