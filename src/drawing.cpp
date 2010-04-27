@@ -494,6 +494,12 @@ static _INLINE_ void pfield_init_linetoscr (void)
     sprite_last_x = 0;
     sprite_first_x = MAX_PIXELS_PER_LINE - 1;
 
+    res_shift = - bplres;
+    if (res_shift)
+        pfield_do_linetoscr=(line_draw_func *)pfiled_do_linetoscr_1;
+    else
+        pfield_do_linetoscr=(line_draw_func *)pfiled_do_linetoscr_0;
+
     /* Now, compute some offsets.  */
     ddf_left -= DISPLAY_LEFT_SHIFT;
     pixels_offset = MAX_PIXELS_PER_LINE - (ddf_left << bplres);
