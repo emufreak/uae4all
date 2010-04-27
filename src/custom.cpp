@@ -1342,6 +1342,19 @@ static _INLINE_ void record_color_change (int hpos, int regno, unsigned long val
     curr_color_changes[next_color_change++].value = value;
 }
 
+static _INLINE_ void record_register_change (int hpos, int regno, unsigned long value)
+{
+    if (regno == 0x100) {
+       if (value & 0x800)
+           thisline_decision.ham_seen = 1;
+       if (hpos < plfstrt + 0x20) {
+           thisline_decision.bplcon0 = value;
+           thisline_decision.bplres = GET_RES (value);
+       }
+    }
+    record_color_change (hpos, regno + 0x1000, value);
+}
+
 static _INLINE_ void expand_sprres (void)
 {
     switch ((bplcon3 >> 6) & 3) {
@@ -1627,6 +1640,8 @@ static __inline__ void reset_decisions (void)
 
     thisline_decision.plfleft = -1;
     thisline_decision.plflinelen = -1;
+    thisline_decision.ham_seen = !! (bplcon0 & 0x800);
+    thisline_decision.ham_at_start = !! (bplcon0 & 0x800);
 
     /* decided_res shouldn't be touched before it's initialized by decide_line(). */
     thisline_decision.diwfirstword = -1;
@@ -2283,6 +2298,11 @@ static _INLINE_ void BPLPTL (int hpos, uae_u16 v, int num)
     bpl[num].pt = (bpl[num].pt & ~0xffff) | (v & 0xfffe);
 }
 
+static _INLINE_ int isehb (uae_u16 bplcon0, uae_u16 bplcon2)
+{
+    return ((bplcon0 & 0xFC00) == 0x6000 || (bplcon0 & 0xFC00) == 0x7000);
+}
+
 static _INLINE_ void BPLCON0 (int hpos, uae_u16 v)
 {
 	v &= ~0x00F1;
@@ -2292,11 +2312,17 @@ static _INLINE_ void BPLCON0 (int hpos, uae_u16 v)
     decide_line (hpos);
     decide_fetch (hpos);
 
-    /* HAM change?  */
-    if ((bplcon0 ^ v) & 0x800) {
-	record_color_change (hpos, -1, !! (v & 0x800));
-    }
-    
+    // fake unused 0x0080 bit as an EHB bit (see below)
+    if (isehb (v, bplcon2))
+       v |= 0x80;
+
+    if ((bplcon0 & (0x800 | 0x400 | 0x80)) != (v & (0x800 | 0x400 | 0x80))) // HAM/EBH/DPF change is instant
+        record_register_change (hpos, 0x100, (bplcon0 & ~(0x800 | 0x400 | 0x80)) | (v & (0x0800 | 0x400 | 0x80)));
+
+    // don't ask..
+    if (GET_PLANES (v) > GET_PLANES (bplcon0) && GET_RES (v) >= GET_RES (bplcon0) && fetch_state != fetch_not_started)
+       fetch_state = fetch_was_plane0;
+
     bplcon0 = v;
     planes_bplcon0=GET_PLANES(v);
     res_bplcon0=GET_RES(v);
@@ -2320,6 +2346,7 @@ static __inline__ void BPLCON2 (int hpos, uae_u16 v)
 	return;
     decide_line (hpos);
     bplcon2 = v;
+    record_register_change (hpos, 0x104, v);
 }
 
 

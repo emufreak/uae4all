@@ -7,7 +7,17 @@ static __inline__ int LNAME (int spix, int dpix, int stoppos)
 
     unsigned short *buf = ((unsigned short *)xlinebuffer);
 
-    if (bpldualpf) {
+/* HAM CASE */
+    if (dp_for_drawing->ham_seen) {
+#if defined(DREAMCAST)
+#error NOT IMPLEMENTED YET
+#else
+	while (dpix < stoppos) {
+	    buf[dpix++]= (xcolors[ham_linebuf[spix]]);
+	    spix += SRC_INC;
+	}
+#endif
+    } else if (bpldualpf) {
 	    // OCS/ECS Dual playfield 
 	    int *lookup = bpldualpfpri ? dblpf_ind2 : dblpf_ind1;
 
@@ -82,6 +92,21 @@ static __inline__ int LNAME (int spix, int dpix, int stoppos)
 
 
 
+/* HIGH BRIGHT CASE */
+    } else if (bplehb) {
+#if defined(DREAMCAST)
+#error NOT IMPLEMENTED YET
+#else
+	while (dpix < stoppos) {
+            uae_u32 spix_val = pixdata.apixels[spix];
+            register unsigned short d = pixdata.apixels[spix];
+            if (d <= 31)
+                buf[dpix++] = colors_for_drawing.acolors[d];
+            else
+                buf[dpix++] = xcolors[(colors_for_drawing.color_uae_regs_ecs[d - 32] >> 1) & 0x777];
+	    spix += SRC_INC;
+	}
+#endif
     } else {
 
 

@@ -175,6 +175,8 @@ struct decision {
     uae_u16 bplcon3, bplcon4;
     uae_u8 nr_planes;
     uae_u8 bplres;
+    unsigned int ham_seen;
+    unsigned int ham_at_start;
 } UAE4ALL_ALIGN;
 
 /* Anything related to changes in hw registers during the DDF for one
