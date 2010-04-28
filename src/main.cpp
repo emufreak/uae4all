@@ -178,6 +178,10 @@ void do_leave_program (void)
     SDL_Quit ();
 #endif
     memory_cleanup ();
+#ifdef MAEMO_CHANGES
+    // MAEMO: Reset the user's keyboard layout based on the value recorded at the start
+    system("/usr/bin/gconftool-2 -s /apps/osso/inputmethod/int_kb_layout $(cat /home/user/.uae4all_int_kb_layout) -t string");
+#endif
 }
 
 #if defined(DREAMCAST) && !defined(DEBUG_UAE4ALL)
@@ -222,6 +226,9 @@ void real_main (int argc, char **argv)
 #ifdef MAEMO_CHANGES
     putenv("SDL_VIDEO_X11_WMCLASS=uae4all");
     chdir(ROM_PATH_PREFIX);
+    // MAEMO: Save the user's native keyboard layout and switch to known arrow-key compliant one
+    system("/usr/bin/gconftool-2 -g /apps/osso/inputmethod/int_kb_layout > /home/user/.uae4all_int_kb_layout");
+    system("/usr/bin/gconftool-2 -s /apps/osso/inputmethod/int_kb_layout us -t string");
 #endif
 //    SDL_Init (SDL_INIT_EVERYTHING | SDL_INIT_NOPARACHUTE);
     SDL_Init (SDL_INIT_VIDEO | SDL_INIT_JOYSTICK 

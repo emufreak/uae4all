@@ -713,7 +713,17 @@ break;
 #endif
 	    uae_quit();
 	    break;
+#ifdef MAEMO_CHANGES
+	case SDL_ACTIVEEVENT:
+	    if (rEvent.active.state & SDL_APPINPUTFOCUS) {
+		// Switch to english or user's native keyboard layout when gaining/loosing focus
+		if (!rEvent.active.gain)
+		    system("/usr/bin/gconftool-2 -s /apps/osso/inputmethod/int_kb_layout $(cat /home/user/.uae4all_int_kb_layout) -t string");
+		else
+		    system("/usr/bin/gconftool-2 -s /apps/osso/inputmethod/int_kb_layout us -t string");
+	    }
 	    break;
+#endif
 	case SDL_JOYBUTTONDOWN:
 #ifdef DEBUG_EVENTS
 	    dbg("Event: joy button down");
