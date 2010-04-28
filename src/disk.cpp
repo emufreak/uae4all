@@ -121,7 +121,7 @@ typedef struct {
     char newname[256]; /* storage space for new filename during eject delay */
 } drive;
 
-static drive floppy[4];
+static drive floppy[NUM_DRIVES];
 
 /* Keeps track of whether the Amiga program seems to be using the data coming
    in from the disk; if this remains 0 for several seconds, we stop calling
