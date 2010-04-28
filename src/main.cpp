@@ -5,6 +5,8 @@ KOS_INIT_FLAGS(INIT_DEFAULT);
 KOS_INIT_ROMDISK(romdisk);
 #endif
 
+extern "C" int main( int argc, char *argv[] );
+
 /*
   * UAE - The Un*x Amiga Emulator
   *
@@ -26,6 +28,7 @@ KOS_INIT_ROMDISK(romdisk);
 #include "events.h"
 #include "memory.h"
 #include "audio.h"
+#include "memory.h"
 #include "sound.h"
 #include "custom.h"
 #include "m68k/m68k_intrf.h"
@@ -42,6 +45,7 @@ KOS_INIT_ROMDISK(romdisk);
 #include "compiler.h"
 #include "bsdsocket.h"
 #include "drawing.h"
+#include "menu.h"
 
 #ifdef USE_SDL
 #include "SDL.h"

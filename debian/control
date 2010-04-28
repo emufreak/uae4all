@@ -11,9 +11,9 @@ Architecture: armel
 Depends: ${shlibs:Depends}
 Description: Commodore Amiga 500 Emulator.
  UAE4All is a "Lite" Amiga Emulator. It is based on E-UAE core
- and utilizes FAME for Motorola 68000 microprocessor emulation.
- It emulates Commodore Amiga 500 hardware with 1 MB Chip RAM,
- OCS and up to 4 floppy drives.
+ and utilizes Cyclone emulator of Motorola 68000 microprocessor
+ for ARM hardware. It emulates Commodore Amiga 500 hardware
+ with 1 MB Chip RAM, OCS and up to 4 floppy drives.
 XSBC-Bugtracker: http://github.com/smokku/uae4all/issues
 XB-Maemo-Display-Name: UAE4All Maemo Edition
 XB-Maemo-Icon-26:
