@@ -40,9 +40,7 @@ static char *text_str_sound="Sound";
 static char *text_str_on="on";
 static char *text_str_off="off";
 static char *text_str_faked="silent";
-static char *text_str_video="Video Mode";
-static char *text_str_pal="PAL";
-static char *text_str_ntsc="NTSC";
+static char *text_str_drives="Number of drives";
 static char *text_str_separator="------------------------------";
 static char *text_str_reset="Reset (R)";
 static char *text_str_run="Run (L)";
@@ -96,7 +94,7 @@ int mainMenu_sound=0;
 int mainMenu_case=-1;
 int mainMenu_autosave=DEFAULT_AUTOSAVE;
 int mainMenu_ntsc=DEFAULT_NTSC;
-int mainMenu_autofire=DEFAULT_AUTOFIRE;
+int mainMenu_drives=DEFAULT_DRIVES;
 int mainMenu_showStatus=DEFAULT_STATUSLN;
 
 enum { MAIN_MENU_CASE_REBOOT, MAIN_MENU_CASE_LOAD, MAIN_MENU_CASE_RUN, MAIN_MENU_CASE_RESET, MAIN_MENU_CASE_CANCEL, MAIN_MENU_CASE_EJECT, MAIN_MENU_CASE_SAVE };
@@ -194,15 +192,29 @@ static void draw_mainMenu(int c)
 	else
 		write_text(26,13,text_str_faked);
 
-	write_text(6,15,text_str_video);
-	if ((!mainMenu_ntsc)&&((c!=5)||(bb)))
-		write_text_inv(17,15,text_str_pal);
+	write_text(6,15,text_str_drives);
+	if ((mainMenu_drives==1)&&((c!=5)||(bb)))
+		write_text_inv(23,15,"1");
 	else
-		write_text(17,15,text_str_pal);
-	if ((mainMenu_ntsc)&&((c!=5)||(bb)))
-		write_text_inv(22,15,text_str_ntsc);
+		write_text(23,15,"1");
+#if NUM_DRIVES > 1
+	if ((mainMenu_drives==2)&&((c!=5)||(bb)))
+		write_text_inv(25,15,"2");
 	else
-		write_text(22,15,text_str_ntsc);
+		write_text(25,15,"2");
+#endif
+#if NUM_DRIVES > 2
+	if ((mainMenu_drives==3)&&((c!=5)||(bb)))
+		write_text_inv(27,15,"3");
+	else
+		write_text(27,15,"3");
+#endif
+#if NUM_DRIVES > 3
+	if ((mainMenu_drives==4)&&((c!=5)||(bb)))
+		write_text_inv(29,15,"4");
+	else
+		write_text(29,15,"4");
+#endif
 
 	write_text(6,17,text_str_autosave);
 	if ((!mainMenu_autosave)&&((c!=6)||(bb)))
@@ -413,8 +425,20 @@ static int key_mainMenu(int *cp)
 					}
 					break;
 				case 5:
-					if ((left)||(right))
-						mainMenu_ntsc=!mainMenu_ntsc;
+					if (left)
+					{
+						if (mainMenu_drives>1)
+							mainMenu_drives--;
+						else
+							mainMenu_drives=NUM_DRIVES;
+					}
+					else if (right)
+					{
+						if (mainMenu_drives<NUM_DRIVES)
+							mainMenu_drives++;
+						else
+							mainMenu_drives=1;
+					}	
 					break;
 				case 6:
 					if ((left)||(right))

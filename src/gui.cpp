@@ -81,7 +81,7 @@ char uae4all_image_file3[128] = { 0, };
 
 int drawfinished=0;
 
-extern int mainMenu_throttle, mainMenu_frameskip, mainMenu_sound, mainMenu_case, mainMenu_autosave, mainMenu_ntsc;
+extern int mainMenu_throttle, mainMenu_frameskip, mainMenu_sound, mainMenu_case, mainMenu_autosave, mainMenu_ntsc, mainMenu_drives;
 
 int emulated_joystick=0;
 int emulated_left=0;
@@ -323,7 +323,7 @@ static void goMenu(void)
     {
     	    extern char *savestate_filename;
     	    extern int saveMenu_n_savestate;
-	    for(int i=0;i<NUM_DRIVES;i++)
+	    for(int i=0;i<mainMenu_drives;i++)
 	    {
 		if (i==0 && strcmp(changed_df[0],uae4all_image_file0)) {
 		    strcpy(changed_df[0],uae4all_image_file0);
@@ -359,7 +359,7 @@ static void goMenu(void)
     {
     	    extern char *savestate_filename;
     	    extern int saveMenu_n_savestate;
-	    for(int i=0;i<NUM_DRIVES;i++)
+	    for(int i=0;i<mainMenu_drives;i++)
 	    {
 		changed_df[i][0]=0;
 		if (i==0) {

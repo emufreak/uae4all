@@ -1,9 +1,15 @@
+uae4all (1rc2-14) fremantle; urgency=low
+
+  * Implemented drive number selection.
+
+ -- Tomasz Sterna <tomek@xiaoka.com>  Wed, 28 Apr 2010 17:27:19 +0200
+
 uae4all (1rc2-13) fremantle; urgency=low
 
   * Brought back Cyclone m86k emulator.
   * Change keyboard layout to standard QWERTY when running.
 
- -- Tomasz Sterna <tomek@xiaoka.com>  Wed, 28 Apr 2010 14:22:08 +0200
+ -- Tomasz Sterna <tomek@xiaoka.com>  Wed, 28 Apr 2010 17:26:30 +0200
 
 uae4all (1rc2-12) fremantle; urgency=low
 

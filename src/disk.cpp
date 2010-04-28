@@ -78,6 +78,8 @@ static uae_u8 selected = 15, disabled=0;
 
 static uae_u8 *writebuffer[544 * 22];
 
+extern int mainMenu_drives;
+
 typedef enum { TRACK_AMIGADOS, TRACK_RAW, TRACK_RAW1 } image_tracktype;
 typedef struct {
     uae_u16 len;
@@ -794,7 +796,6 @@ void disk_eject (int num)
     {
 	drive_eject (floppy + num);
 	prefs_df[num][0] = changed_df[num][0] = 0;
-		//prefs_drives[num].name[0] = prefs_drives[num].changed = 0;
 	floppy[num].newname[0] = 0;
     }
 }
@@ -804,7 +805,7 @@ void disk_insert (int num, const char *name)
 #ifdef DEBUG_DISK
     dbg("disc.c : disk_insert");
 #endif
-    if (num<NUM_DRIVES)
+    if (num<mainMenu_drives)
     {
     	drive *drv = floppy + num;
     	if (name[0] == 0) {
@@ -831,7 +832,7 @@ void DISK_check_change (void)
 #ifdef DEBUG_DISK
     dbg("disc.c : DISK_check_change");
 #endif
-    for (i = 0; i < NUM_DRIVES; i++) {
+    for (i = 0; i < mainMenu_drives; i++) {
 	uae4all_flush_disk(i);
 	drive *drv = floppy + i;
 	if (real_changed_df[i])
@@ -893,14 +894,14 @@ void DISK_select (uae_u8 data)
     if (step != step_pulse) {
 	step = step_pulse;
 	if (step) {
-	    for (dr = 0; dr < NUM_DRIVES; dr++) {
+	    for (dr = 0; dr < mainMenu_drives; dr++) {
 		if (!(selected & (1 << dr))) {
 		    drive_step (floppy + dr);
 		}
 	    }
 	}
     }
-    for (dr = 0; dr < NUM_DRIVES; dr++) {
+    for (dr = 0; dr < mainMenu_drives; dr++) {
 	/* motor on/off workings tested with small assembler code on real Amiga 1200. */
 	/* motor flipflop is set only when drive select goes from high to low */ 
 	if (!(selected & (1 << dr)) && (lastselected & (1 << dr)) ) {
@@ -916,7 +917,7 @@ void DISK_select (uae_u8 data)
 	    }
 	}
     }
-    for (dr = 0; dr < NUM_DRIVES; dr++) {
+    for (dr = 0; dr < mainMenu_drives; dr++) {
 	floppy[dr].state = (!(selected & (1 << dr))) | !floppy[dr].motoroff;
 	update_drive_gui (dr);
     }
@@ -931,7 +932,7 @@ uae_u8 DISK_status (void)
     uae_u8 st = 0x3c;
     int dr;
 
-    for (dr = 0; dr < NUM_DRIVES; dr++) {
+    for (dr = 0; dr < mainMenu_drives; dr++) {
 	drive *drv = floppy + dr;
 	if (!(selected & (1 << dr))) {
 	    if (drive_running (drv)) {
@@ -1197,7 +1198,7 @@ static void DISK_start (void)
 #ifdef DEBUG_DISK
     dbg("disc.c : DISK_start");
 #endif
-    for (dr = 0; dr < NUM_DRIVES; dr++) {
+    for (dr = 0; dr < mainMenu_drives; dr++) {
 	drive *drv = &floppy[dr];
 	if (!(selected & (1 << dr))) {
 	    int tr = drv->cyl * 2 + side;
@@ -1228,7 +1229,7 @@ void DISK_update (void)
 #ifdef DEBUG_DISK
     dbg("disc.c : DISK_update");
 #endif
-    for (dr = 0; dr < NUM_DRIVES; dr++) {
+    for (dr = 0; dr < mainMenu_drives; dr++) {
 	drive *drv = &floppy[dr];
 	if (drv->steplimit)
 	    drv->steplimit--;
@@ -1242,7 +1243,7 @@ void DISK_update (void)
 
     dodmafetch ();
 
-    for (dr = 0; dr < NUM_DRIVES; dr++) {
+    for (dr = 0; dr < mainMenu_drives; dr++) {
 	drive *drv = &floppy[dr];
 	if (drv->motoroff)
 	    continue;
@@ -1287,7 +1288,7 @@ void DSKLEN (uae_u16 v, int hpos)
 #ifdef DEBUG_DISK
     {
 	int dr;
-	for (dr = 0; dr < NUM_DRIVES; dr++) {
+	for (dr = 0; dr < mainMenu_drives; dr++) {
 	    drive *drv = &floppy[dr];
 	    if (drv->motoroff)
 		continue;
@@ -1315,7 +1316,7 @@ void DSKLEN (uae_u16 v, int hpos)
 	uaecptr pc = _68k_getpc ();
 	if ((pc & 0xF80000) != 0xF80000)
 	    return;
-	for (dr = 0; dr < NUM_DRIVES; dr++) {
+	for (dr = 0; dr < mainMenu_drives; dr++) {
 	    drive *drv = &floppy[dr];
 	    if (drv->motoroff)
 		continue;
@@ -1472,13 +1473,13 @@ void DISK_reset (void)
     disk_hpos = 0;
     disk_data_used = 0;
     disabled = 0;
-    for (i = NUM_DRIVES; i < 4; i++)
+    for (i = mainMenu_drives; i < 4; i++)
 	disabled |= 1 << i;
     dma_tab[0] = 0xffffffff;
     dskbytr_cycle[0] = 0;
     dskbytr_cycle[1] = 255;
     wordsync_cycle[0] = 255;
-    for (i = 0 ; i < NUM_DRIVES; i++)
+    for (i = 0 ; i < mainMenu_drives; i++)
     {
 	    drive *drv = &floppy[i];
 	    drv->cyl=0;
@@ -1599,7 +1600,7 @@ uae_u8 *save_disk(int num,int *len)
     drive *drv;
 
     dstbak = dst = (uae_u8 *)malloc (2+1+1+1+1+4+4+256);
-    if (num<NUM_DRIVES)
+    if (num<mainMenu_drives)
     {
     	drv = &floppy[num];
     	save_u32 (drv->drive_id);	    /* drive type ID */

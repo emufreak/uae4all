@@ -19,7 +19,7 @@ extern SDL_Surface *prSDLScreen;
 #define DEFAULT_SKIPINTRO 0
 #define DEFAULT_NTSC 0
 #define DEFAULT_USE1MBCHIP 1
-#define DEFAULT_AUTOFIRE 0
+#define DEFAULT_DRIVES 2
 
 void text_draw_background();
 void init_text(int splash);

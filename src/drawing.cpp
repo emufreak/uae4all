@@ -78,6 +78,8 @@ extern int drawfinished;
 extern int mainMenu_showStatus;
 extern int mainMenu_drives;
 
+extern int mainMenu_drives;
+
 /* Lookup tables for dual playfields.  The dblpf_*1 versions are for the case
    that playfield 1 has the priority, dbplpf_*2 are used if playfield 2 has
    priority.  If we need an array for non-dual playfield mode, it has no number.  */
@@ -2144,9 +2146,9 @@ static _INLINE_ void draw_status_line (int line)
 
     uae4all_memclr (xlinebuffer, GFXVIDINFO_WIDTH * GFXVIDINFO_PIXBYTES);
 
-    x+=100 - (TD_WIDTH*(NUM_DRIVES-1));
+    x+=100 - (TD_WIDTH*(mainMenu_drives-1));
 
-    for (led = 0; led < (NUM_DRIVES+1); led++) {
+    for (led = 0; led < (mainMenu_drives+1); led++) {
 	int track;
 	if (led > 0) {
 	    track = gui_data.drive_track[led-1];
@@ -2175,7 +2177,7 @@ static _INLINE_ void draw_status_line (int line)
     }
 
         x = GFXVIDINFO_WIDTH - TD_PADX - 5*TD_WIDTH;
-        x+=100 - (TD_WIDTH*(NUM_DRIVES-1));
+        x+=100 - (TD_WIDTH*(mainMenu_drives-1));
 	if (y >= TD_PADY && y - TD_PADY < TD_NUM_HEIGHT) {
 	    int offs = (TD_WIDTH - 2 * TD_NUM_WIDTH) / 2;
 	    write_tdnumber (x + offs, y - TD_PADY, fps_counter / 10);
