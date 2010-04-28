@@ -5,11 +5,6 @@ KOS_INIT_FLAGS(INIT_DEFAULT);
 KOS_INIT_ROMDISK(romdisk);
 #endif
 
-int kickstart=1;
-int oldkickstart=1;
-
-extern char launchDir[300];
-
 extern "C" int main( int argc, char *argv[] );
 
 /*
