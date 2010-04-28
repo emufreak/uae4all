@@ -296,7 +296,7 @@
 #define HAVE_STRING_H 1
 
 /* Define if you have the <strings.h> header file.  */
-#if !defined (DREAMCAST) && !defined (PSP) && !defined (GIZMONDO)
+#ifndef DREAMCAST
 #define HAVE_STRINGS_H 1
 #else
 /* #undef HAVE_STRINGS_H */

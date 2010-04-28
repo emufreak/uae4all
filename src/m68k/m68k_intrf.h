@@ -155,6 +155,16 @@ static __inline__ void _68k_setpc(unsigned mipc)
 	m68k_context.pc = m68k_context.checkpc(mipc);
 }
 
+static __inline__ uae_u8 *restore_cpu (uae_u8 *src)
+{
+	return src;
+}
+
+static __inline__ uae_u8 *save_cpu (int *len)
+{
+	return (uae_u8 *)len;
+}
+
 #else
 
 #define _68k_getpc	m68k_getpc

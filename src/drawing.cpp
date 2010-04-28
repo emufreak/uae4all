@@ -75,13 +75,8 @@ static int interlace_seen = 0;
 
 extern int drawfinished;
 
-int showStatus = 1;
-
-extern char *statusmessages[];
-
-extern int showmsg;
-static int delay=0;
-  
+extern int mainMenu_showStatus;
+extern int mainMenu_drives;
 
 /* Lookup tables for dual playfields.  The dblpf_*1 versions are for the case
    that playfield 1 has the priority, dbplpf_*2 are used if playfield 2 has
@@ -2226,7 +2221,7 @@ static _INLINE_ void finish_drawing_frame (void)
 {
     int i;
 
-    if (showStatus)
+    if (mainMenu_showStatus)
         fps_counter_upd();
 
 #if !defined(DREAMCAST) && !defined(DINGOO)
@@ -2245,13 +2240,13 @@ static _INLINE_ void finish_drawing_frame (void)
 
 	i1 = i + min_ypos_for_screen;
 	where = amiga2aspect_line_map[i1];
-	if (where >= GFXVIDINFO_HEIGHT - ((showStatus) ? TD_TOTAL_HEIGHT : 0))
+	if (where >= GFXVIDINFO_HEIGHT - ((mainMenu_showStatus) ? TD_TOTAL_HEIGHT : 0))
 	    break;
 	if (where == -1)
 	    continue;
 	pfield_draw_line (line, where, amiga2aspect_line_map[i1 + 1]);
     }
-    if (showStatus)
+    if (mainMenu_showStatus)
     {
 	if (   (frame_redraw_necessary) || fps_counter_changed
 	|| (back_drive_track0!=gui_data.drive_track[0])

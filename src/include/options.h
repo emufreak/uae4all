@@ -25,7 +25,6 @@ extern char romfile[64];
 extern unsigned prefs_chipmem_size;
 extern int prefs_gfx_framerate, changed_gfx_framerate;
 extern int m68k_speed;
-extern char *kickstarts_rom_names[3];
 
 #ifndef MAEMO_CHANGES
 #define PREFS_GFX_WIDTH 320

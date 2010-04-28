@@ -50,7 +50,7 @@ extern "C" int main( int argc, char *argv[] );
 #include "compiler.h"
 #include "bsdsocket.h"
 #include "drawing.h"
-#include "menu.h" 
+#include "menu.h"
 
 #ifdef USE_SDL
 #include "SDL.h"
@@ -245,7 +245,7 @@ void real_main (int argc, char **argv)
 
     rtarea_init ();
 
-   // machdep_init ();
+    machdep_init ();
 
     if (! setup_sound ()) {
 	write_log ("Sound driver unavailable: Sound output disabled\n");
