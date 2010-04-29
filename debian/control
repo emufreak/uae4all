@@ -9,9 +9,9 @@ Vcs-Git: git://github.com/smokku/uae4all.git
 Package: uae4all
 Architecture: armel
 Depends: ${shlibs:Depends}
-Description: Commodore Amiga 500 Emulator.
- UAE4All is a "Lite" Amiga Emulator. It is based on E-UAE core
- and utilizes FAME for Motorola 68000 microprocessor emulation.
+Description: Commodore Amiga 500 Emulator
+ UAE4All is a "Lite" Amiga Emulator which is based on stripped
+ E-UAE core with a lot of optimisations.
  It emulates Commodore Amiga 500 hardware with 1 MB Chip RAM,
  OCS and up to 4 floppy drives.
 XSBC-Bugtracker: http://github.com/smokku/uae4all/issues

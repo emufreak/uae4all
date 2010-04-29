@@ -11,9 +11,8 @@ all: $(PROG)
 
 #DEBUG=1
 
+ifeq ($(SBOX_DPKG_INST_ARCH),i386)
 FAME_CORE=1
-ifeq ($(SBOX_DPKG_INST_ARCH),armel)
-FAME_CORE_C=1
 endif
 
 LIB7Z=1

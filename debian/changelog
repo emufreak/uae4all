@@ -1,8 +1,9 @@
 uae4all (1rc2-14) fremantle; urgency=low
 
   * Implemented drive number selection.
+  * Use UAE m86k emulation on device.
 
- -- Tomasz Sterna <tomek@xiaoka.com>  Wed, 28 Apr 2010 17:27:19 +0200
+ -- Tomasz Sterna <tomek@xiaoka.com>  Thu, 29 Apr 2010 11:33:48 +0200
 
 uae4all (1rc2-13) fremantle; urgency=low
 
