@@ -356,7 +356,7 @@ static __inline__ void count_frame (void)
 int coord_native_to_amiga_x (int x)
 {
     x += VISIBLE_LEFT_BORDER;
-    x <<= 1;
+    x <<= 1+bplres;
     return x + 2*DISPLAY_LEFT_SHIFT - 2*DIW_DDF_OFFSET;
 }
 
