@@ -241,7 +241,6 @@ static void uae4all_disk_real_write(int num)
 			char *namefile=get_namefile(num);
 			void *bc=calloc(1,MAX_COMP_SIZE);
 			unsigned long sizecompressed=MAX_COMP_SIZE;
-			//int compress2(Bytef * dest, uLongf * destLen, const Bytef * source, uLong sourceLen, int level);
 			int retc=compress2((Bytef *)bc,&sizecompressed,(const Bytef *)uae4all_extra_buffer,changed,Z_BEST_COMPRESSION);
 			if (retc>=0)
 			{

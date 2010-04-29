@@ -16,7 +16,16 @@
 // #define STOP_WHEN_COPPER
 #define STOP_WHEN_NASTY
 // #define CUSTOM_PREFETCHS
-typedef int sprbuf_res_t, cclockres_t, hwres_t,	bplres_t;
+typedef int sprbuf_res_t, cclockres_t, hwres_t, bplres_t;
+
+#ifdef USE_FAME_CORE
+#if defined(DREAMCAST) || defined(USE_FAME_CORE_C)
+#define IO_CYCLE io_cycle_counter
+#else
+#define IO_CYCLE __io_cycle_counter
+#endif
+extern signed int IO_CYCLE;
+#endif
 
 #include "sysconfig.h"
 #include "sysdeps.h"
@@ -113,7 +122,7 @@ unsigned long int currcycle, nextevent;
 struct ev eventtab[ev_max];
 
 static int vpos;
-extern int next_vpos[512];
+extern int *next_vpos;
 static uae_u16 lof;
 static int next_lineno;
 static int lof_changed = 0;
@@ -2046,54 +2055,172 @@ static _INLINE_ void DMACON (uae_u16 v, int hpos)
     events_schedule();
 }
 
+#if defined(USE_FAME_CORE) && !defined(SPECIAL_DEBUG_INTERRUPTS)
+
+static void __inline__ custom_fame_lower(int n_int)
+{
+#ifdef DEBUG_INTERRUPTS
+	dbgf("!IRQ %i\n",n_int);
+#endif
+	m68k_lower_irq(n_int);
+}
+
+static void __inline__ custom_fame_raise(int n_int)
+{
+	M68KCONTEXT.execinfo&=0xFF6F;
+#ifdef DEBUG_INTERRUPTS
+	dbgf("IRQ %i\n",n_int);
+#endif
+	m68k_raise_irq(n_int,M68K_AUTOVECTORED_IRQ);
+
+//dbgf("interrupts[0]=%i, M68KCONTEXT.execinfo=0x%X\n",M68KCONTEXT.interrupts[0],M68KCONTEXT.execinfo);
+}
+
+#else
+
+static void __inline__ custom_fame_lower(int n_int)
+{
+#ifdef DEBUG_INTERRUPTS
+	dbgf("!IRQ %i\n",n_int);
+#endif
+}
+
+
+static void __inline__ custom_fame_raise(int n_int)
+{
+#ifdef DEBUG_INTERRUPTS
+	dbgf("IRQ %i\n",n_int);
+#endif
+        unset_special (SPCFLAG_DOINT);
+}
+
+#endif
+
 
 static _INLINE_ void SET_INTERRUPT(void)
 {
-	int new_irqs = 0, new_level = 0;
-
-	if (intena & 0x4000)
-	{
-		int imask = intreq & intena;
-		if (imask & 0x0007) { new_irqs |= 1 << 1; new_level = 1; }
-		if (imask & 0x0008) { new_irqs |= 1 << 2; new_level = 2; }
-		if (imask & 0x0070) { new_irqs |= 1 << 3; new_level = 3; }
-		if (imask & 0x0780) { new_irqs |= 1 << 4; new_level = 4; }
-		if (imask & 0x1800) { new_irqs |= 1 << 5; new_level = 5; }
-		if (imask & 0x2000) { new_irqs |= 1 << 6; new_level = 6; }
-	}
-
-	if (new_irqs == M68KCONTEXT.interrupts[0]); // nothing changed
-	else if (new_irqs == 0)
-	{
-		M68KCONTEXT.interrupts[0] = 0; // uae4all_go_interrupt = 0;
-		m68k_irq_update(0);
-	}
+    uae4all_prof_start(14);
+#ifdef DEBUG_INTERRUPTS
+    dbgf("SET_INTERRUPT intreq=0x%X, intena=0x%X\n",intreq,intena);
+#endif
+#if defined(USE_FAME_CORE) || defined(DEBUG_M68K)
+    uae_u16 imask = intreq & intena;
+    if (!(intena & 0x4000))
+    {
+#if defined(DEBUG_INTERRUPTS) || !defined(USE_FAME_CORE) || defined(DEBUG_M68K)
+	    custom_fame_lower(6);
+	    custom_fame_lower(5);
+	    custom_fame_lower(4);
+	    custom_fame_lower(3);
+	    custom_fame_lower(2);
+	    custom_fame_lower(1);
+#else
+//	    M68KCONTEXT.interrupts[0]&=1;
+	    M68KCONTEXT.interrupts[0]=0;
+#endif
+    }
+    else   
+    {
+#if defined(DEBUG_INTERRUPTS) || !defined(USE_FAME_CORE) || defined(DEBUG_M68K)
+	if (imask & 0x2000)
+		custom_fame_raise(6);
 	else
+		custom_fame_lower(6);
+	if (imask & 0x1800)
+		custom_fame_raise(5);
+	else
+		custom_fame_lower(5);
+	if (imask & 0x0780)
+		custom_fame_raise(4);
+	else
+		custom_fame_lower(4);
+	if (imask & 0x0070)
+		custom_fame_raise(3);
+	else
+		custom_fame_lower(3);
+	if (imask & 0x0008)
+		custom_fame_raise(2);
+	else
+		custom_fame_lower(2);
+	if (imask & 0x0007)
+		custom_fame_raise(1);
+	else
+		custom_fame_lower(1);
+#else
 	{
-		int old_irqs = M68KCONTEXT.interrupts[0], old_level = 0, end_timeslice;
+#ifndef USE_IMASK_TABLE
+		register unsigned char mascara=0;
+		mascara|=(imask & 0x2000)>>(13-6);
+		mascara|=(imask & 0x1000)>>(12-5);
+		mascara|=(imask & 0x0800)>>(11-5);
+		mascara|=(imask & 0x0400)>>(10-4);
+		mascara|=(imask & 0x0200)>>(9-4);
+		mascara|=(imask & 0x0100)>>(8-4);
+		mascara|=(imask & 0x0080)>>(7-4);
+		mascara|=(imask & 0x0040)>>(6-3);
+		mascara|=(imask & 0x0020)>>(5-3);
+		mascara|=(imask & 0x0010)>>(4-3);
+		mascara|=(imask & 0x0008)>>(3-2);
+		mascara|=(imask & 0x0004)>>(2-1);
+		mascara|=(imask & 0x0002);
+		mascara|=(imask & 0x0001)<<1;
+#else
+		register unsigned char mascara=imask_tab[imask];
+#endif
 
-		for (old_irqs>>=1; old_irqs; old_irqs>>=1, old_level++);
-		end_timeslice = new_level > old_level && new_level > _68k_intmask;
-
-		M68KCONTEXT.interrupts[0] = new_irqs;
-		m68k_irq_update(end_timeslice);
-		/*
-		if (new_level > old_level && new_level > _68k_intmask)
+#ifndef FAME_INTERRUPTS_PATCH
+//		M68KCONTEXT.interrupts[0]=(M68KCONTEXT.interrupts[0]&1)|mascara;
+		M68KCONTEXT.interrupts[0]=mascara;
+		if (mascara)
 		{
-			uae4all_go_interrupt = new_irqs; // delayed interrupt
-			m68k_irq_update(1);
+			M68KCONTEXT.execinfo&=0xFF7F;
+//			m68k_release_timeslice();
+//			if (IO_CYCLE>24)
+				IO_CYCLE = 24;
 		}
+#ifdef FAME_INTERRUPTS_PATCH
+//		else M68KCONTEXT.interrupts[0]&=1;
+		else M68KCONTEXT.interrupts[0]=0;
+#endif
+#else
+		if (!mascara)
+			M68KCONTEXT.interrupts[0]=0;
 		else
 		{
-			M68KCONTEXT.interrupts[0] = new_irqs;
-			uae4all_go_interrupt = 0;
-			m68k_irq_update(0);
+			M68KCONTEXT.execinfo&=0xFF7F;
+			if (mascara<M68KCONTEXT.interrupts[0])
+				M68KCONTEXT.interrupts[0]=mascara;
+			else if (mascara>M68KCONTEXT.interrupts[0])
+			{
+				if ((1<<_68k_intmask)<mascara)
+				{
+					uae4all_go_interrupt=mascara;
+//					m68k_release_timeslice();
+//					if (IO_CYCLE>24)
+						IO_CYCLE = 24;
+				}
+				else
+					M68KCONTEXT.interrupts[0]=mascara;
+			}
 		}
-		*/
+#endif
 	}
+#endif
+    }
+ 
 
-	//printf("%i:%03i ST_IT int req/ena=%04x/%04x,",M68KCONTEXT.cycles_counter,IO_CYCLE,intreq,intena);
-	//printf(" masc=%02x, ints=%02x\n",new_irqs,M68KCONTEXT.interrupts[0]);
+#if !defined(USE_FAME_CORE) || defined(SPECIAL_DEBUG_INTERRUPTS)
+    set_special (SPCFLAG_INT);
+#else
+#if defined(DEBUG_INTERRUPTS) || defined(DEBUG_M68K)
+    m68k_release_timeslice();
+#endif
+#endif
+
+#else
+    set_special (SPCFLAG_INT);
+#endif
+    uae4all_prof_end(14);
 }
 
 /*static int trace_intena = 0;*/
