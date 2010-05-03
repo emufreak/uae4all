@@ -1206,7 +1206,9 @@ static int do_specialties (int cycles)
 	set_special (SPCFLAG_DOINT);
     }
     if (uae_regs.spcflags & SPCFLAG_BRK ) {
+#ifdef DEBUG_SAVESTATE
 printf("BRK state=%X, flags=%X, PC=%X\n",savestate_state,_68k_spcflags,_68k_getpc());fflush(stdout);
+#endif
 	unset_special (SPCFLAG_BRK);
 	return 1;
     }
