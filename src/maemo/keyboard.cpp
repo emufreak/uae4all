@@ -60,6 +60,7 @@ int decode_maemo (SDL_keysym *prKeySym)
     case SDLK_u: return AK_7;
     case SDLK_i: return AK_8;
     case SDLK_o: return AK_9;
+
     default: return -1;
     }
 }

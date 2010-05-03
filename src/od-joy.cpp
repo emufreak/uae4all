@@ -52,6 +52,7 @@ void read_joystick(int nr, unsigned int *dir, int *button)
     struct joy_range *r = nr == 0 ? &range0 : &range1;
     x_axis = SDL_JoystickGetAxis (joy, 0);
     y_axis = SDL_JoystickGetAxis (joy, 1);
+
     if (x_axis < r->minx) r->minx = x_axis;
     if (y_axis < r->miny) r->miny = y_axis;
     if (x_axis > r->maxx) r->maxx = x_axis;
