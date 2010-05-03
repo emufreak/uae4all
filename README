@@ -45,7 +45,7 @@ You need to put the "kick.rom" image in the MyDocs directory (MMC root).
 Make sure that you have the correct kickstart image (524288 bytes).
 The original kickstart 1.3 works best.
 
-Compressed ADF images are supported. Either with gzip or 7zip.
+GZip compressed ADF images are supported.
 
 For more information see README.Dingoo and README.GP2X.
 
