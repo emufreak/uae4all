@@ -1,14 +1,14 @@
 uae4all (1rc2-14) fremantle; urgency=low
 
   * Implemented drive number selection.
-  * Use UAE m86k emulation.
+  * Use UAE m68k emulation.
   * Removed misported sprite collision handling
 
  -- Tomasz Sterna <tomek@xiaoka.com>  Mon,  3 May 2010 16:52:16 +0200
 
 uae4all (1rc2-13) fremantle; urgency=low
 
-  * Brought back Cyclone m86k emulator.
+  * Brought back Cyclone m68k emulator.
   * Change keyboard layout to standard QWERTY when running.
 
  -- Tomasz Sterna <tomek@xiaoka.com>  Wed, 28 Apr 2010 17:26:30 +0200
