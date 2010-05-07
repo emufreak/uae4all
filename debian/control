@@ -9,7 +9,7 @@ Vcs-Browser: http://github.com/smokku/uae4all
 Homepage: http://wiki.github.com/smokku/uae4all/
 
 Package: uae4all
-Architecture: armel
+Architecture: any
 Depends: ${shlibs:Depends}
 Description: Commodore Amiga 500 Emulator
  UAE4All is a "Lite" Amiga Emulator which is based on stripped
