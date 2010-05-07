@@ -7,7 +7,7 @@
   */
 
 
-// #define USE_BLITTER_EXTRA_INLINE
+#define USE_BLITTER_EXTRA_INLINE
 #define STOP_WHEN_NASTY
 
 #include "sysconfig.h"

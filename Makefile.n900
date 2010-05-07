@@ -14,7 +14,7 @@ all: $(PROG)
 LIB7Z=1
 
 DEFAULT_CFLAGS = $(shell sdl-config --cflags)
-LDFLAGS        = $(shell sdl-config --libs) -lSDL_mixer -lz
+LDFLAGS        = $(shell sdl-config --libs) -lSDL_mixer -lz -lhgw
 
 
 MORE_CFLAGS = -O3  -Isrc/ -Isrc/include/ -Isrc/menu -Isrc/vkbd \
@@ -62,7 +62,7 @@ MORE_CFLAGS+= -DUSE_ZFILE
 
 #MORE_CFLAGS+= -DUAE4ALL_NO_USE_RESTRICT
 
-#MORE_CFLAGS+= -DNO_SOUND
+MORE_CFLAGS+= -DNO_SOUND
 #MORE_CFLAGS+= -DNO_THREADS
 #MORE_CFLAGS+= -DEXACT_AUDIO
 #MORE_CFLAGS+= -DSOUND_AHI
@@ -142,6 +142,7 @@ OBJS =	\
 	src/menu/menu_save.o \
 	src/menu/menu_main.o \
 	src/vkbd/vkbd.o \
+	src/maemo/gconf.o \
 	src/maemo/keyboard.o \
 	src/maemo/sdlvscalers.o
 

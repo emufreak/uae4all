@@ -40,15 +40,22 @@ KOS_INIT_ROMDISK(romdisk);
 #include "osemu.h"
 #include "exectasks.h"
 #include "compiler.h"
-#include "bsdsocket.h"
 #include "drawing.h"
 
 #ifdef USE_SDL
 #include "SDL.h"
 #endif
 #ifdef DREAMCAST
-#include<SDL_dreamcast.h>
+#include <SDL_dreamcast.h>
 #endif
+#ifdef MAEMO_CHANGES
+#include <hgw/hgw.h>
+HgwContext *hgw;
+void load_gconf_prefs ();
+#else
+#define load_gconf_prefs()
+#endif
+
 long int version = 256*65536L*UAEMAJOR + 65536L*UAEMINOR + UAESUBREV;
 
 int no_gui = 0;
@@ -60,26 +67,6 @@ struct gui_info gui_data;
 char warning_buffer[256];
 
 char optionsfile[256];
-
-/* If you want to pipe printer output to a file, put something like
- * "cat >>printerfile.tmp" above.
- * The printer support was only tested with the driver "PostScript" on
- * Amiga side, using apsfilter for linux to print ps-data.
- *
- * Under DOS it ought to be -p LPT1: or -p PRN: but you'll need a
- * PostScript printer or ghostscript -=SR=-
- */
-
-/* Slightly stupid place for this... */
-/* ncurses.c might use quite a few of those. */
-char *colormodes[] = { "256 colors", "32768 colors", "65536 colors",
-    "256 colors dithered", "16 colors dithered", "16 million colors",
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "",
-    "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""
-};
 
 #ifdef DINGOO
 void dingoo_set_clock(unsigned int mhz);
@@ -103,6 +90,8 @@ void default_prefs ()
 
     strcpy (prefs_df[0], ROM_PATH_PREFIX "df0.adf");
     strcpy (prefs_df[1], ROM_PATH_PREFIX "df1.adf");
+    strcpy (prefs_df[2], ROM_PATH_PREFIX "df2.adf");
+    strcpy (prefs_df[3], ROM_PATH_PREFIX "df3.adf");
 
 #if defined(DREAMCAST) || defined(MAEMO_CHANGES)
     strcpy (romfile, ROM_PATH_PREFIX "kick.rom");
@@ -218,24 +207,28 @@ void leave_program (void)
 
 void real_main (int argc, char **argv)
 {
-#ifdef USE_SDL
 #ifdef MAEMO_CHANGES
     putenv("SDL_VIDEO_X11_WMCLASS=uae4all");
     chdir(ROM_PATH_PREFIX);
     // MAEMO: Save the user's native keyboard layout and switch to known arrow-key compliant one
     system("/usr/bin/gconftool-2 -g /apps/osso/inputmethod/int_kb_layout > /home/user/.uae4all_int_kb_layout");
     system("/usr/bin/gconftool-2 -s /apps/osso/inputmethod/int_kb_layout us -t string");
+
+    hgw = hgw_context_init();
+    if (hgw) no_gui = 1;
 #endif
+#ifdef USE_SDL
 //    SDL_Init (SDL_INIT_EVERYTHING | SDL_INIT_NOPARACHUTE);
     SDL_Init (SDL_INIT_VIDEO | SDL_INIT_JOYSTICK 
 #ifndef NO_SOUND
  			| SDL_INIT_AUDIO
 #endif
 	);
-#endif
     SDL_ShowCursor(SDL_DISABLE);
+#endif
 
     default_prefs ();
+    load_gconf_prefs ();
     
     if (! graphics_setup ()) {
 	exit (1);
@@ -278,7 +271,6 @@ void real_main (int argc, char **argv)
 #endif
     gui_update ();
 
-//    dingoo_set_clock(430);
     if (graphics_init ())
 		start_program ();
     leave_program ();

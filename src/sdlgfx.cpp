@@ -48,7 +48,9 @@ extern int __sdl_dc_emulate_mouse;
 #endif
 
 #ifdef MAEMO_CHANGES
+#include <hgw/hgw.h>
 #include "maemo/sdlvscalers.h"
+extern HgwContext *hgw;
 #endif
 
 #include "debug_uae4all.h"
@@ -920,6 +922,15 @@ break;
     if ((uae4all_keystate[AK_CTRL] || uae4all_keystate[AK_RCTRL]) && uae4all_keystate[AK_LAMI] && uae4all_keystate[AK_RAMI])
 	uae_reset ();
 */
+#ifdef MAEMO_CHANGES
+	/* in game event polling */
+	HgwMessage *msg;
+	HgwMessageFlags flags;
+	if ( hgw_msg_check_incoming(hgw,msg,flags) == HGW_ERR_COMMUNICATION ) {
+		/* Message Incoming, process msg */
+	}
+#endif
+
 #ifdef DEBUG_EVENTS
     dbg(" handle_events -> terminado");
 #endif
