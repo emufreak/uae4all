@@ -1,14 +1,15 @@
 uae4all (1rc2-15) fremantle; urgency=low
 
-  * Added hildon-games-wrapper support
+  * Added hildon-games-wrapper support.
+  * Use zlib to compress savestates.
 
- -- Tomasz Sterna <tomek@xiaoka.com>  Fri,  7 May 2010 23:08:51 +0200
+ -- Tomasz Sterna <tomek@xiaoka.com>  Mon, 10 May 2010 00:36:43 +0200
 
 uae4all (1rc2-14) fremantle; urgency=low
 
   * Implemented drive number selection.
   * Use UAE m68k emulation.
-  * Removed misported sprite collision handling
+  * Removed misported sprite collision handling.
 
  -- Tomasz Sterna <tomek@xiaoka.com>  Mon,  3 May 2010 16:52:16 +0200
 

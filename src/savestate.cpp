@@ -56,11 +56,8 @@
 #include "m68k/m68k_intrf.h"
 #include "debug_uae4all.h"
 
-#ifdef USE_LIB7Z
-#include "lib7z/lzma.h"
-#define LZMA_COMPRESSION_LEVEL 9
-#define LZMA_DICT_SIZE (65536*4)
-#endif
+#include <zlib.h>
+#define Z_COMPRESSION_LEVEL Z_BEST_COMPRESSION
 
 #include "savestate.h"
 
@@ -183,20 +180,15 @@ static void save_chunk (FILE *f, uae_u8 *chunk, long len, char *name)
 	fwrite (zero, 1, len, f);
 }
 
-#ifdef USE_LIB7Z
 static void save_chunk_compressed (FILE *f, uae_u8 *chunk, long len, char *name)
 {
 
 	void *tmp=malloc(len);
 	long outSize=len;
-	Lzma_Encode((Byte *)tmp, (size_t *)&outSize, (const Byte *)chunk, (size_t)len, LZMA_COMPRESSION_LEVEL, LZMA_DICT_SIZE);
+	compress2((Bytef *)tmp, (uLongf *)&outSize, (const Bytef *)chunk, (uLong)len, Z_COMPRESSION_LEVEL);
 	save_chunk(f,(uae_u8*)tmp,outSize,name);
 	free(tmp);
 }
-#else
-#define save_chunk_compressed(F,C,L,N) save_chunk(F,C,L,N)
-#endif
-
 
 static uae_u8 *restore_chunk (FILE *f, char *name, long *len, long *filepos)
 {

@@ -55,10 +55,8 @@ static long chip_filepos;
 static long bogo_filepos;
 static long rom_filepos;
 
-#ifdef USE_LIB7Z
-#include "lib7z/lzma.h"
+#include <zlib.h>
 static long compressed_size;
-#endif
 
 addrbank *mem_banks[65536];
 
@@ -1142,22 +1140,21 @@ static void allocate_memory (void)
     if (savestate_state == STATE_RESTORE)
     {
 	    fseek (savestate_file, chip_filepos, SEEK_SET);
-#ifdef USE_LIB7Z
+
 	    void *tmp=malloc(compressed_size);
 	    int outSize=allocated_chipmem;
 	    int inSize=compressed_size;
-	    SRes res;
+	    int res;
 	    fread (tmp, 1, compressed_size, savestate_file);
-	    res=Lzma_Decode((Byte *)chipmemory, (size_t *)&outSize, (const Byte *)tmp, (size_t *)&inSize);
+	    res=uncompress((Bytef *)chipmemory, (uLongf *)&outSize, (const Bytef *)tmp, (uLong) inSize);
 	    free(tmp);
-	    if(res != SZ_OK)
+	    if(res != Z_OK)
 	    {
-		   allocated_chipmem=compressed_size;
-	    	   fseek (savestate_file, chip_filepos, SEEK_SET);
+	        // decompression failed - treat data literaly
+		    allocated_chipmem=compressed_size;
+		    fseek (savestate_file, chip_filepos, SEEK_SET);
+		    fread (chipmemory, 1, allocated_chipmem, savestate_file);
 	    }
-	    if(res != SZ_OK)
-#endif
-	    fread (chipmemory, 1, allocated_chipmem, savestate_file);
 	    if (allocated_bogomem > 0)
 	    {
 		    fseek (savestate_file, bogo_filepos, SEEK_SET);
@@ -1433,11 +1430,7 @@ uae_u8 *save_bram (int *len)
 void restore_cram (int len, long filepos)
 {
     chip_filepos = filepos;
-#ifdef USE_LIB7Z
     compressed_size=len;
-#else
-    prefs_chipmem_size = len;
-#endif
 }
 
 void restore_bram (int len, long filepos)
