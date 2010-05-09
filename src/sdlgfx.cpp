@@ -51,6 +51,7 @@ extern int __sdl_dc_emulate_mouse;
 #include <hgw/hgw.h>
 #include "maemo/sdlvscalers.h"
 extern HgwContext *hgw;
+extern int no_gui;
 #endif
 
 #include "debug_uae4all.h"
@@ -926,7 +927,7 @@ break;
 	/* in game event polling */
 	HgwMessage *msg;
 	HgwMessageFlags flags;
-	if ( hgw_msg_check_incoming(hgw,msg,flags) == HGW_ERR_COMMUNICATION ) {
+	if ( no_gui && hgw_msg_check_incoming(hgw,msg,flags) == HGW_ERR_COMMUNICATION ) {
 		/* Message Incoming, process msg */
 	}
 #endif
