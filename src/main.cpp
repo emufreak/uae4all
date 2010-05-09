@@ -50,7 +50,7 @@ KOS_INIT_ROMDISK(romdisk);
 #endif
 #ifdef MAEMO_CHANGES
 #include <hgw/hgw.h>
-HgwContext *hgw;
+HgwContext *hgw = NULL;
 void load_gconf_prefs ();
 #else
 #define load_gconf_prefs()
@@ -109,7 +109,7 @@ void uae_reset (void)
     gui_purge_events();
 /*
     if (quit_program == 0)
-	quit_program = -2;
+    quit_program = -2;
 */  
 //    black_screen_now();
     quit_program = 2;
@@ -119,7 +119,7 @@ void uae_reset (void)
 void uae_quit (void)
 {
     if (quit_program != -1)
-	quit_program = -1;
+    quit_program = -1;
 }
 
 void reset_all_systems (void)
@@ -143,13 +143,13 @@ void do_start_program (void)
 {
     /* Do a reset on startup. Whether this is elegant is debatable. */
 #if defined(DREAMCAST) && !defined(DEBUG_UAE4ALL)
-	while(1)
+    while(1)
 #endif
-	{
-		quit_program = 2;
-		reset_frameskip();
-		m68k_go (1);
-	}
+    {
+        quit_program = 2;
+        reset_frameskip();
+        m68k_go (1);
+    }
 }
 
 void do_leave_program (void)
@@ -173,7 +173,7 @@ void do_leave_program (void)
 static uint32 uae4all_dc_args[4]={ 0, 0, 0, 0};
 static void uae4all_dreamcast_handler(irq_t source, irq_context_t *context)
 {
-	irq_create_context(context,context->r[15], (uint32)&do_start_program, (uint32 *)&uae4all_dc_args[0],0);
+    irq_create_context(context,context->r[15], (uint32)&do_start_program, (uint32 *)&uae4all_dc_args[0],0);
 }
 #endif
 
@@ -214,16 +214,23 @@ void real_main (int argc, char **argv)
     system("/usr/bin/gconftool-2 -g /apps/osso/inputmethod/int_kb_layout > /home/user/.uae4all_int_kb_layout");
     system("/usr/bin/gconftool-2 -s /apps/osso/inputmethod/int_kb_layout us -t string");
 
-    hgw = hgw_context_init();
-    if (hgw) no_gui = 1;
+    char *dbusLaunch = getenv("MAE_DBUS");
+    if (!dbusLaunch || dbusLaunch[0] != 'y') {
+        // Not launched from games wrapper, so we don't disable internal UI
+        no_gui = 0;
+    }
+    else {
+        hgw = hgw_context_init();
+        if (hgw) no_gui = 1;
+    }
 #endif
 #ifdef USE_SDL
 //    SDL_Init (SDL_INIT_EVERYTHING | SDL_INIT_NOPARACHUTE);
     SDL_Init (SDL_INIT_VIDEO | SDL_INIT_JOYSTICK 
 #ifndef NO_SOUND
- 			| SDL_INIT_AUDIO
+              | SDL_INIT_AUDIO
 #endif
-	);
+    );
     SDL_ShowCursor(SDL_DISABLE);
 #endif
 
@@ -231,7 +238,7 @@ void real_main (int argc, char **argv)
     load_gconf_prefs ();
     
     if (! graphics_setup ()) {
-	exit (1);
+    exit (1);
     }
 
     rtarea_init ();
@@ -239,20 +246,20 @@ void real_main (int argc, char **argv)
     machdep_init ();
 
     if (! setup_sound ()) {
-	write_log ("Sound driver unavailable: Sound output disabled\n");
-	produce_sound = 0;
+    write_log ("Sound driver unavailable: Sound output disabled\n");
+    produce_sound = 0;
     }
     init_joystick ();
 
-	int err = gui_init ();
-	if (err == -1) {
-	    write_log ("Failed to initialize the GUI\n");
-	} else if (err == -2) {
-	    exit (0);
-	}
+    int err = gui_init ();
+    if (err == -1) {
+        write_log ("Failed to initialize the GUI\n");
+    } else if (err == -2) {
+        exit (0);
+    }
     if (sound_available && produce_sound > 1 && ! init_audio ()) {
-	write_log ("Sound driver unavailable: Sound output disabled\n");
-	produce_sound = 0;
+    write_log ("Sound driver unavailable: Sound output disabled\n");
+    produce_sound = 0;
     }
 
     /* Install resident module to get 8MB chipmem, if requested */
@@ -272,7 +279,7 @@ void real_main (int argc, char **argv)
     gui_update ();
 
     if (graphics_init ())
-		start_program ();
+        start_program ();
     leave_program ();
 }
 
@@ -281,10 +288,10 @@ int main (int argc, char **argv)
 {
 #ifdef DREAMCAST
 #if defined(DEBUG_UAE4ALL) || defined(DEBUG_FRAMERATE) || defined(PROFILER_UAE4ALL) || defined(AUTO_RUN)
-	{
-		SDL_DC_ShowAskHz(SDL_FALSE);
-    		puts("MAIN !!!!");
-	}
+    {
+        SDL_DC_ShowAskHz(SDL_FALSE);
+            puts("MAIN !!!!");
+    }
 #endif
 #endif
 #ifdef DEBUG_FILE
